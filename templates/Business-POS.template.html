@@ -2,11 +2,7 @@
   <!-- Invoice Header -->
   <header class="pt-4 flex flex-col items-center">
     <!-- Company Logo & Name -->
-    <img
-      v-if="print.displayLogo"
-      class="h-18 py-1 w-full object-contain"
-      :src="print.logo"
-    />
+    <img v-if="print.displayLogo" class="h-18 py-1 w-full object-contain" :src="print.logo" />
     <h2 class="font-semibold text-xl" :style="{ color: print.color }">
       {{ print.companyName }}
     </h2>
@@ -26,7 +22,9 @@
   </section>
 
   <div class="w-auto text-xs grid grid-cols-7 grid-rows-3 p-2">
-    <div class="col-span-2 font-bold"><p>Invoice No</p></div>
+    <div class="col-span-2 font-bold">
+      <p>Invoice No</p>
+    </div>
     <div class="col-start-3">:</div>
     <div class="col-span-4 col-start-4">{{ doc.name }}</div>
     <div class="col-span-2 row-start-2 font-bold">Customer</div>
@@ -43,22 +41,18 @@
     <section class="font-bold w-auto flex border-b border-t border-black">
       <div class="py-1 w-4">{{ t`SI` }}</div>
       <div class="py-1 w-2/5">{{ t`Item` }}</div>
-      <div class="py-1 w-1/12">{{ t`Qty` }}</div>
-      <div class="py-1 text-right w-3/12">{{ t`Price` }}</div>
-      <div class="py-1 text-right w-3/12">{{ t`Amount` }}</div>
+      <div class="py-1 w-1/20">{{ t`Qty` }}</div>
+      <div class="py-1 text-right w-2/6">{{ t`Price` }}</div>
+      <div class="py-1 text-right w-2/6">{{ t`Amount` }}</div>
     </section>
 
     <!-- Body Rows -->
-    <section
-      class="flex py-1 text-gray-900 w-auto"
-      v-for="(row,index) in doc.items"
-      :key="row.name"
-    >
+    <section class="flex py-1 text-gray-900 w-auto" v-for="(row,index) in doc.items" :key="row.name">
       <div class="w-4 py-1">{{ index + 1 }}</div>
       <div class="w-2/5 py-1">{{ row.item }}</div>
-      <div class="w-1/12 py-1 text-left">{{ row.quantity }}</div>
-      <div class="w-3/12 text-right py-1">{{ row.rate }}</div>
-      <div class="w-3/12 text-right py-1">{{ row.amount }}</div>
+      <div class="w-1/20 py-1 text-left">{{ parseFloat(row.quantity) }}</div>
+      <div class="w-2/6 text-right py-1">{{ row.rate }}</div>
+      <div class="w-2/6 text-right py-1">{{ row.amount }}</div>
     </section>
 
     <!-- Totaled Amounts -->
@@ -76,16 +70,14 @@
 
   <!-- Tax Breakdown -->
   <section v-if="doc.taxes.length" class="mx-2">
-    <p
-      class="
+    <p class="
         flex
         justify-center
         font-semibold
         border-t border-black
         text-lg
         mt-2
-      "
-    >
+      ">
       Tax Summary
     </p>
 
@@ -94,11 +86,7 @@
       <p>{{doc.subTotal}}</p>
     </div>
 
-    <div
-      class="flex justify-between pl-5 text-base"
-      v-for="tax in doc.taxes"
-      :key="tax.name"
-    >
+    <div class="flex justify-between pl-5 text-base" v-for="tax in doc.taxes" :key="tax.name">
       <p>{{ tax.account }}</p>
       <p>{{ tax.amount }}</p>
     </div>
@@ -112,9 +100,7 @@
       <div class="text-right">{{ t`Balance` }}</div>
     </div>
 
-    <div
-      class="w-auto grid grid-cols-3 grid-rows-1 border-t border-black text-xs"
-    >
+    <div class="w-auto grid grid-cols-3 grid-rows-1 border-t border-black text-xs">
       <div>{{ t`Discount` }}</div>
       <div class="text-right font-medium">
         {{ doc.totalDiscount ? doc.totalDiscount : '00.00'}}
