@@ -324,6 +324,7 @@ function getCompleteSidebar(): SidebarConfig {
           name: 'import-wizard',
           route: '/import-wizard',
         },
+        /*
         {
           label: t`Print Templates`,
           name: 'print-template',
@@ -337,6 +338,7 @@ function getCompleteSidebar(): SidebarConfig {
           hidden: () =>
             !fyo.singles.AccountingSettings?.enableFormCustomization,
         },
+        */
         {
           label: t`Settings`,
           name: 'settings',

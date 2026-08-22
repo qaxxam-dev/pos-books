@@ -3,7 +3,7 @@ import { showSidebar } from 'src/utils/refs';
 import { toggleSidebar } from 'src/utils/ui';
 </script>
 <template>
-  <div class="flex overflow-hidden">
+  <div class="relative flex overflow-hidden">
     <Transition name="sidebar">
       <!-- eslint-disable vue/require-explicit-emits -->
       <Sidebar
@@ -61,16 +61,16 @@ import { toggleSidebar } from 'src/utils/ui';
         bottom-0
         start-0
         text-gray-600
-        dark:text-gray-400
+        dark:text-gray-500
         hover:bg-gray-100
-        dark:hover:bg-gray-900
+        dark:hover:bg-gray-875
         rounded
         rtl-rotate-180
         p-1
         m-4
-        opacity-0
-        hover:opacity-100 hover:shadow-md
+        z-10
       "
+      title="Show Sidebar"
       @click="() => toggleSidebar()"
     >
       <feather-icon name="chevrons-right" class="w-4 h-4" />

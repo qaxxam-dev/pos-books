@@ -255,7 +255,7 @@ export default defineComponent({
       paymentMethod: undefined as string | undefined,
       transferRefNo: undefined as string | undefined,
       defaultCustomer: undefined as string | undefined,
-      transferClearanceDate: undefined as Date | undefined,
+      transferClearanceDate: new Date() as Date | undefined,
 
       paymentDoc: {} as Payment,
       sinvDoc: {} as SalesInvoice,
@@ -1343,6 +1343,8 @@ export default defineComponent({
     async clearValues() {
       this.setSinvDoc();
       this.itemSerialNumbers = {};
+      this.transferClearanceDate = new Date();
+      this.transferRefNo = undefined;
 
       this.paidAmount = fyo.pesa(0);
       this.transferAmount = fyo.pesa(0);

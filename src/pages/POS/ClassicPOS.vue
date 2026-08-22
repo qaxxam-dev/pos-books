@@ -264,9 +264,12 @@
                   <Button
                     class="w-full"
                     :style="{
+                      backgroundColor: '#16A34A',
+                      /*
                       backgroundColor:
                         profile?.saveButtonColour ||
                         fyo.singles.Defaults?.saveButtonColour,
+                      */
                     }"
                     :class="`${isReturnInvoiceEnabledReturn ? 'py-5' : 'py-6'}`"
                     @click="$emit('saveInvoiceAction')"
@@ -280,9 +283,12 @@
                   <Button
                     class="w-full"
                     :style="{
+                      /*
                       backgroundColor:
                         profile?.cancelButtonColour ||
                         fyo.singles.Defaults?.cancelButtonColour,
+                      */
+                      backgroundColor: '#EF4444', 
                     }"
                     :class="`${isReturnInvoiceEnabledReturn ? 'py-5' : 'py-6'}`"
                     @click="() => $emit('clearValues')"
@@ -301,9 +307,12 @@
                   <Button
                     class="w-full"
                     :style="{
+                      /*
                       backgroundColor:
                         profile?.heldButtonColour ||
                         fyo.singles.Defaults?.heldButtonColour,
+                      */
+                       backgroundColor: '#F97316',
                     }"
                     :class="`${isReturnInvoiceEnabledReturn ? 'py-5' : 'py-6'}`"
                     @click="emitEvent('toggleModal', 'SavedInvoice', true)"
@@ -319,9 +328,12 @@
                     v-if="isReturnInvoiceEnabledReturn"
                     class="w-full py-5"
                     :style="{
+                      /*
                       backgroundColor:
                         profile?.returnButtonColour ||
                         fyo.singles.Defaults?.returnButtonColour,
+                      */
+                      backgroundColor: '#EF4444',
                     }"
                     @click="
                       emitEvent('toggleModal', 'ReturnSalesInvoice', true)
@@ -337,9 +349,12 @@
                     v-else
                     class="w-full"
                     :style="{
+                      /*
                       backgroundColor:
                         profile?.payButton ||
                         fyo.singles.Defaults?.payButtonColour,
+                      */
+                      backgroundColor: '#16A34A', 
                     }"
                     :class="`${isReturnInvoiceEnabledReturn ? 'py-5' : 'py-6'}`"
                     @click="emitEvent('handlePaymentAction')"
@@ -355,9 +370,12 @@
                   v-if="isReturnInvoiceEnabledReturn"
                   class="w-full mt-2 py-5"
                   :style="{
+                    /*
                     backgroundColor:
                       profile?.payButtonColour ||
                       fyo.singles.Defaults?.payButtonColour,
+                    */
+                    backgroundColor: '#16A34A',
                   }"
                   @click="emitEvent('handlePaymentAction')"
                 >

@@ -109,7 +109,7 @@
 
     <!-- Report Issue and DB Switcher -->
     <div class="window-no-drag flex flex-col gap-2 py-2 px-4">
-      <button
+      <!--button
         class="
           flex
           text-sm text-gray-600
@@ -125,7 +125,7 @@
         <p>
           {{ t`Help` }}
         </p>
-      </button>
+      </button-->
 
       <button
         class="
@@ -160,7 +160,7 @@
         <p>{{ t`Change DB` }}</p>
       </button>
 
-      <button
+      <!--button
         class="
           flex
           text-sm text-gray-600
@@ -176,7 +176,7 @@
         <p>
           {{ t`Report Issue` }}
         </p>
-      </button>
+      </button-->
 
       <p
         v-if="showDevMode"
@@ -203,6 +203,7 @@
         m-4
         rtl-rotate-180
       "
+      title="Hide Sidebar"
       @click="() => toggleSidebar()"
     >
       <feather-icon name="chevrons-left" class="w-4 h-4" />

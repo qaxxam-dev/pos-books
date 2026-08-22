@@ -1,6 +1,6 @@
 <template>
   <Modal class="w-2/6 ml-auto mr-3.5" :set-close-listener="false">
-    <div v-if="sinvDoc.fieldMap" class="px-4 py-6 grid" style="height: 95vh">
+    <div v-if="sinvDoc.fieldMap" class="px-4 py-6 grid overflow-y-auto" style="height: 95vh">
       <Currency
         :df="fyo.fieldMap.PaymentFor.amount"
         :read-only="!transferAmount.isZero()"
@@ -13,11 +13,24 @@
         <Button
           v-for="method in paymentMethods"
           :key="method"
-          class="w-full py-5 bg-teal-500"
+          :background="false"
+          class="w-full py-2 border transition-colors duration-150"
+          :class="
+            paymentMethod === method
+              ? 'bg-teal-500 text-white border-teal-500'
+              : 'bg-gray-25 text-gray-800 border-gray-200 dark:bg-gray-875 dark:text-gray-200 dark:border-gray-800'
+          "
           @click="setPaymentMethodAndAmount(method)"
         >
           <slot>
-            <p class="uppercase text-lg text-white font-semibold">
+            <p
+              class="uppercase text-lg font-semibold"
+              :class="
+                paymentMethod === method
+                  ? 'text-white'
+                  : 'text-gray-800 dark:text-gray-200'
+              "
+            >
               {{ t`${method}` }}
             </p>
           </slot>
@@ -48,7 +61,7 @@
         />
       </div>
 
-      <div class="mt-14 grid grid-cols-2 gap-6">
+      <div class="mt-4 grid grid-cols-2 gap-6">
         <Currency
           v-show="showPaidChange"
           :df="{
@@ -79,7 +92,7 @@
       </div>
 
       <div
-        class="mb-14 row-start-4 row-span-2 grid grid-cols-2 gap-x-6 gap-y-11"
+        class="mb-4 row-start-4 row-span-2 grid grid-cols-2 gap-x-6 gap-y-4"
       >
         <Currency
           :df="sinvDoc.fieldMap.netTotal"
@@ -146,7 +159,10 @@
           <Button
             class="w-full"
             :style="{
+              /*
               backgroundColor: fyo.singles.Defaults?.submitButtonColour,
+              */
+              backgroundColor: '#16A34A', 
             }"
             style="padding: 1.35rem"
             @click="submitTransaction"
@@ -163,7 +179,10 @@
           <Button
             class="w-full"
             :style="{
+              /*
               backgroundColor: fyo.singles.Defaults?.cancelButtonColour,
+              */
+              backgroundColor: '#EF4444',   
             }"
             style="padding: 1.35rem"
             @click="cancelTransaction"
@@ -179,7 +198,12 @@
         <div class="col-span-1">
           <Button
             class="w-full"
-            :style="{ backgroundColor: fyo.singles.Defaults?.payButtonColour }"
+            :style="{
+              /*
+              backgroundColor: fyo.singles.Defaults?.payButtonColour ,
+              */
+              backgroundColor: '#16A34A',
+            }"
             style="padding: 1.35rem"
             @click="payTransaction"
           >
@@ -195,7 +219,10 @@
           <Button
             class="w-full"
             :style="{
-              backgroundColor: fyo.singles.Defaults?.payAndPrintButtonColour,
+              /*
+              backgroundColor: fyo.singles.Defaults?.payAndPrintButtonColour  ,
+              */
+              backgroundColor: '#16A34A',
             }"
             style="padding: 1.35rem"
             @click="payAndPrintTransaction"

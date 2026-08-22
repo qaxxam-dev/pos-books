@@ -9,6 +9,8 @@ import {
   app,
   BrowserWindow,
   BrowserWindowConstructorOptions,
+  Menu,
+  MenuItemConstructorOptions,
   protocol,
   ProtocolRequest,
   ProtocolResponse,
@@ -23,7 +25,7 @@ import registerIpcMainMessageListeners from './main/registerIpcMainMessageListen
 import registerProcessListeners from './main/registerProcessListeners';
 
 export class Main {
-  title = 'Frappe Books';
+  title = 'POS Books';
   icon: string;
 
   winURL = '';
@@ -54,6 +56,7 @@ export class Main {
     };
 
     this.registerListeners();
+    this.setupMenu();
     if (this.isMac && this.isDevelopment) {
       app.dock.setIcon(this.icon);
     }
@@ -81,6 +84,76 @@ export class Main {
     registerAutoUpdaterListeners(this);
     registerAppLifecycleListeners(this);
     registerProcessListeners(this);
+  }
+
+  setupMenu() {
+    const isMac = this.isMac;
+    const template: MenuItemConstructorOptions[] = [
+      ...(isMac
+        ? [
+            {
+              label: app.name,
+              submenu: [
+                { role: 'about' as const },
+                { type: 'separator' as const },
+                { role: 'services' as const },
+                { type: 'separator' as const },
+                { role: 'hide' as const },
+                { role: 'hideOthers' as const },
+                { role: 'unhide' as const },
+                { type: 'separator' as const },
+                { role: 'quit' as const },
+              ],
+            },
+          ]
+        : []),
+      {
+        label: 'Edit',
+        submenu: [
+          { role: 'undo' as const },
+          { role: 'redo' as const },
+          { type: 'separator' as const },
+          { role: 'cut' as const },
+          { role: 'copy' as const },
+          { role: 'paste' as const },
+          { role: 'pasteAndMatchStyle' as const },
+          { role: 'delete' as const },
+          { role: 'selectAll' as const },
+        ],
+      },
+      {
+        label: 'View',
+        submenu: [
+          { role: 'reload' as const },
+          { role: 'forceReload' as const },
+          { role: 'toggleDevTools' as const },
+          { type: 'separator' as const },
+          { role: 'resetZoom' as const },
+          { role: 'zoomIn' as const },
+          { role: 'zoomOut' as const },
+          { type: 'separator' as const },
+          { role: 'togglefullscreen' as const },
+        ],
+      },
+      {
+        label: 'Window',
+        submenu: [
+          { role: 'minimize' as const },
+          { role: 'zoom' as const },
+          ...(isMac
+            ? [
+                { type: 'separator' as const },
+                { role: 'front' as const },
+                { type: 'separator' as const },
+                { role: 'window' as const },
+              ]
+            : [{ role: 'close' as const }]),
+        ],
+      },
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
   }
 
   getOptions(): BrowserWindowConstructorOptions {
@@ -166,6 +239,29 @@ export class Main {
       this.mainWindow!.loadURL(this.winURL).catch((err) =>
         emitMainProcessError(err)
       );
+    });
+
+    this.mainWindow.webContents.on('context-menu', (_event, params) => {
+      const contextMenuTemplate: MenuItemConstructorOptions[] = [];
+
+      if (params.isEditable) {
+        contextMenuTemplate.push(
+          { role: 'undo', enabled: params.editFlags.canUndo },
+          { role: 'redo', enabled: params.editFlags.canRedo },
+          { type: 'separator' },
+          { role: 'cut', enabled: params.editFlags.canCut },
+          { role: 'copy', enabled: params.editFlags.canCopy },
+          { role: 'paste', enabled: params.editFlags.canPaste },
+          { role: 'selectAll', enabled: params.editFlags.canSelectAll }
+        );
+      } else if (params.selectionText && params.selectionText.trim() !== '') {
+        contextMenuTemplate.push({ role: 'copy' }, { role: 'selectAll' });
+      }
+
+      if (contextMenuTemplate.length > 0) {
+        const menu = Menu.buildFromTemplate(contextMenuTemplate);
+        menu.popup();
+      }
     });
   }
 }

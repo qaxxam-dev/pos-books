@@ -1604,7 +1604,8 @@ export abstract class Invoice extends Transactional {
         continue;
       }
 
-      if (isAuto) {
+      const reducesStock = this.isSales !== !!this.isReturn;
+      if (isAuto && reducesStock) {
         const stock =
           (await this.fyo.db.getStockQuantity(
             item,

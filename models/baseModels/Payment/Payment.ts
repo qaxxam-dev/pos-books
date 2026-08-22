@@ -535,6 +535,7 @@ export class Payment extends Transactional {
   static defaults: DefaultMap = {
     numberSeries: (doc) => getNumberSeries(doc.schemaName, doc.fyo),
     date: () => new Date(),
+    clearanceDate: () => new Date(),
   };
 
   async getTotalTax() {
@@ -670,27 +671,21 @@ export class Payment extends Transactional {
           'referenceName'
         )) as Invoice | null;
 
-        const partyDoc = (await this.loadAndGetLink('party')) as Party;
-        const outstanding = partyDoc.outstandingAmount as Money;
+        if (refDoc) {
+          if (refDoc.schemaName === ModelNameEnum.SalesInvoice) {
+            return refDoc.isReturn ? PaymentTypeEnum.Pay : PaymentTypeEnum.Receive;
+          } else if (refDoc.schemaName === ModelNameEnum.PurchaseInvoice) {
+            return refDoc.isReturn ? PaymentTypeEnum.Receive : PaymentTypeEnum.Pay;
+          }
+        }
 
-        if (partyDoc.role === PartyRoleEnum.Supplier) {
-          if (refDoc?.isReturn) {
-            return PaymentTypeEnum.Receive;
-          } else {
-            return PaymentTypeEnum.Pay;
-          }
-        } else if (partyDoc.role === PartyRoleEnum.Customer) {
-          if (refDoc?.isSales && refDoc.isReturn) {
-            return PaymentTypeEnum.Pay;
-          } else {
-            return PaymentTypeEnum.Receive;
-          }
-        } else if (partyDoc.role === PartyRoleEnum.Both) {
-          if (refDoc?.isSales && refDoc.isReturn) {
-            return PaymentTypeEnum.Pay;
-          } else {
-            return PaymentTypeEnum.Receive;
-          }
+        const partyDoc = (await this.loadAndGetLink('party')) as Party;
+        const outstanding = partyDoc?.outstandingAmount as Money;
+
+        if (partyDoc?.role === PartyRoleEnum.Supplier) {
+          return PaymentTypeEnum.Pay;
+        } else if (partyDoc?.role === PartyRoleEnum.Customer) {
+          return PaymentTypeEnum.Receive;
         }
 
         if (outstanding?.isZero() ?? true) {
