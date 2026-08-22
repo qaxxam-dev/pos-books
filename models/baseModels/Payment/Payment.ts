@@ -241,10 +241,6 @@ export class Payment extends Transactional {
     if (!this.clearanceDate) {
       throw new ValidationError(t`Clearance Date not set.`);
     }
-
-    if (!this.referenceId) {
-      throw new ValidationError(t`Reference Id not set.`);
-    }
   }
 
   async getTaxSummary() {

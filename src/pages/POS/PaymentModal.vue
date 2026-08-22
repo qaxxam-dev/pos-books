@@ -43,7 +43,7 @@
           :df="fyo.fieldMap.Payment.referenceId"
           :show-label="true"
           :border="true"
-          :required="!transferAmount.isZero()"
+          :required="false"
           :read-only="false"
           :value="transferRefNo"
           @change="(value:string) => $emit('setTransferRefNo', value)"
