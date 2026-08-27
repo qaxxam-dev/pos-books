@@ -1,6 +1,6 @@
 <template>
   <Modal class="w-2/6 ml-auto mr-3.5" :set-close-listener="false">
-    <div v-if="sinvDoc.fieldMap" class="px-4 py-6 grid overflow-y-auto" style="height: 95vh">
+    <div v-if="sinvDoc.fieldMap" class="px-4 py-6 grid overflow-y-auto" style="max-height: 85vh; height: 100%;">
       <Currency
         :df="fyo.fieldMap.PaymentFor.amount"
         :read-only="!transferAmount.isZero()"

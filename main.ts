@@ -14,6 +14,7 @@ import {
   protocol,
   ProtocolRequest,
   ProtocolResponse,
+  screen,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import fs from 'fs';
@@ -158,9 +159,20 @@ export class Main {
 
   getOptions(): BrowserWindowConstructorOptions {
     const preload = path.join(__dirname, 'main', 'preload.js');
+    
+    let windowHeight = this.HEIGHT;
+    try {
+      const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
+      if (workAreaSize && workAreaSize.height < windowHeight) {
+        windowHeight = workAreaSize.height;
+      }
+    } catch (e) {
+      console.warn('Could not determine screen workAreaSize', e);
+    }
+
     const options: BrowserWindowConstructorOptions = {
       width: this.WIDTH,
-      height: this.HEIGHT,
+      height: windowHeight,
       title: this.title,
       titleBarStyle: 'hidden',
       trafficLightPosition: { x: 16, y: 16 },

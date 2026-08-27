@@ -3,7 +3,7 @@
     <SectionHeader>
       <template #title>{{ t`Top Expenses` }}</template>
       <template #action>
-        <PeriodSelector :value="period" @change="(value) => (period = value)" />
+        <PeriodSelector :value="period" :options="periodOptions" @change="(value) => (period = value)" @change-custom="(from, to) => { customFrom = from; customTo = to; }" />
       </template>
     </SectionHeader>
 
@@ -114,7 +114,11 @@ export default defineComponent({
   },
   methods: {
     async setData() {
-      const { fromDate, toDate } = getDatesAndPeriodList(this.period);
+      const { fromDate, toDate } = getDatesAndPeriodList(
+        this.period,
+        this.customFrom,
+        this.customTo
+      );
       let topExpenses = await fyo.db.getTopExpenses(
         fromDate.toISO(),
         toDate.toISO()

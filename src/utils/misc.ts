@@ -14,15 +14,30 @@ import { schemaTranslateables } from 'utils/translationHelpers';
 import type { LanguageMap } from 'utils/types';
 import { PeriodKey } from './types';
 
-export function getDatesAndPeriodList(period: PeriodKey): {
+export function getDatesAndPeriodList(
+  period: PeriodKey,
+  customFrom?: string,
+  customTo?: string
+): {
   periodList: DateTime[];
   fromDate: DateTime;
   toDate: DateTime;
 } {
-  const toDate: DateTime = DateTime.now().plus({ days: 1 });
+  let toDate: DateTime = DateTime.now().plus({ days: 1 });
   let fromDate: DateTime;
 
-  if (period === 'This Year') {
+  if (period === 'Today') {
+    fromDate = DateTime.now().startOf('day');
+    toDate = DateTime.now().endOf('day');
+    return {
+      periodList: [fromDate],
+      fromDate,
+      toDate,
+    };
+  } else if (period === 'Custom' && customFrom && customTo) {
+    fromDate = DateTime.fromISO(customFrom).startOf('day');
+    toDate = DateTime.fromISO(customTo).endOf('day');
+  } else if (period === 'This Year') {
     fromDate = toDate.minus({ months: 12 });
   } else if (period === 'YTD') {
     fromDate = DateTime.now().startOf('year');
@@ -51,6 +66,10 @@ export function getDatesAndPeriodList(period: PeriodKey): {
     periodList.unshift(nextDate);
   }
   periodList.shift();
+
+  if (periodList.length === 0) {
+    periodList.push(fromDate);
+  }
 
   return {
     periodList,

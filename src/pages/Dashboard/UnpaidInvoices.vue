@@ -4,7 +4,7 @@
     <SectionHeader>
       <template #title>{{ title }}</template>
       <template #action>
-        <PeriodSelector :value="period" @change="(value) => (period = value)" />
+        <PeriodSelector :value="period" :options="periodOptions" @change="(value) => (period = value)" @change-custom="(from, to) => { customFrom = from; customTo = to; }" />
       </template>
     </SectionHeader>
 
@@ -137,7 +137,7 @@ export default defineComponent({
       unpaidCount: 0,
       paidCount: 0,
       barWidth: 40,
-      period: 'This Year',
+      period: 'Today',
     } as {
       show: boolean;
       period: PeriodKey;
@@ -206,7 +206,11 @@ export default defineComponent({
       await routeTo({ path, query });
     },
     async setData() {
-      const { fromDate, toDate } = getDatesAndPeriodList(this.period);
+      const { fromDate, toDate } = getDatesAndPeriodList(
+        this.period,
+        this.customFrom,
+        this.customTo
+      );
 
       const { total, outstanding } = await fyo.db.getTotalOutstanding(
         this.schemaName,

@@ -17,8 +17,9 @@
         <PeriodSelector
           class="px-3"
           :value="period"
-          :options="['This Year', 'This Quarter', 'This Month', 'YTD']"
+          :options="['Today', 'This Month', 'This Quarter', 'This Year', 'YTD', 'Custom']"
           @change="(value) => (period = value)"
+          @change-custom="handleCustomDateChange"
         />
       </div>
     </PageHeader>
@@ -31,6 +32,8 @@
         <Cashflow
           class="p-4"
           :common-period="period"
+          :common-custom-from="customFrom"
+          :common-custom-to="customTo"
           :dark-mode="darkMode"
           @period-change="handlePeriodChange"
         />
@@ -39,6 +42,8 @@
           <UnpaidInvoices
             :schema-name="'SalesInvoice'"
             :common-period="period"
+            :common-custom-from="customFrom"
+            :common-custom-to="customTo"
             :dark-mode="darkMode"
             class="border-e dark:border-gray-800"
             @period-change="handlePeriodChange"
@@ -46,6 +51,8 @@
           <UnpaidInvoices
             :schema-name="'PurchaseInvoice'"
             :common-period="period"
+            :common-custom-from="customFrom"
+            :common-custom-to="customTo"
             :dark-mode="darkMode"
             @period-change="handlePeriodChange"
           />
@@ -55,12 +62,16 @@
           <ProfitAndLoss
             class="w-full p-4 border-e dark:border-gray-800"
             :common-period="period"
+            :common-custom-from="customFrom"
+            :common-custom-to="customTo"
             :dark-mode="darkMode"
             @period-change="handlePeriodChange"
           />
           <Expenses
             class="w-full p-4"
             :common-period="period"
+            :common-custom-from="customFrom"
+            :common-custom-to="customTo"
             :dark-mode="darkMode"
             @period-change="handlePeriodChange"
           />
@@ -94,7 +105,11 @@ export default {
     darkMode: { type: Boolean, default: false },
   },
   data() {
-    return { period: 'This Year' };
+    return { 
+      period: 'Today',
+      customFrom: '',
+      customTo: '',
+    };
   },
   activated() {
     docsPathRef.value = 'books/dashboard';
@@ -109,6 +124,10 @@ export default {
       }
 
       this.period = '';
+    },
+    handleCustomDateChange(from, to) {
+      this.customFrom = from;
+      this.customTo = to;
     },
   },
 };

@@ -1,44 +1,61 @@
 <template>
-  <Dropdown ref="dropdown" class="text-sm" :items="periodOptions" right>
-    <template
-      #default="{
-        toggleDropdown,
-        highlightItemUp,
-        highlightItemDown,
-        selectHighlightedItem,
-      }"
-    >
-      <div
-        class="
-          text-sm
-          flex
-          focus:outline-none
-          hover:text-gray-800
-          dark:hover:text-gray-100
-          focus:text-gray-800
-          dark:focus:text-gray-100
-          items-center
-          py-1
-          rounded-md
-          leading-relaxed
-          cursor-pointer
-        "
-        :class="
-          !value
-            ? 'text-gray-600 dark:text-gray-500'
-            : 'text-gray-900 dark:text-gray-300'
-        "
-        tabindex="0"
-        @click="toggleDropdown()"
-        @keydown.down="highlightItemDown"
-        @keydown.up="highlightItemUp"
-        @keydown.enter="selectHighlightedItem"
+  <div class="flex items-center space-x-2">
+    <Dropdown ref="dropdown" class="text-sm" :items="periodOptions" right>
+      <template
+        #default="{
+          toggleDropdown,
+          highlightItemUp,
+          highlightItemDown,
+          selectHighlightedItem,
+        }"
       >
-        {{ periodSelectorMap?.[value] ?? value }}
-        <feather-icon name="chevron-down" class="ms-1 w-3 h-3" />
-      </div>
-    </template>
-  </Dropdown>
+        <div
+          class="
+            text-sm
+            flex
+            focus:outline-none
+            hover:text-gray-800
+            dark:hover:text-gray-100
+            focus:text-gray-800
+            dark:focus:text-gray-100
+            items-center
+            py-1
+            rounded-md
+            leading-relaxed
+            cursor-pointer
+          "
+          :class="
+            !value
+              ? 'text-gray-600 dark:text-gray-500'
+              : 'text-gray-900 dark:text-gray-300'
+          "
+          tabindex="0"
+          @click="toggleDropdown()"
+          @keydown.down="highlightItemDown"
+          @keydown.up="highlightItemUp"
+          @keydown.enter="selectHighlightedItem"
+        >
+          {{ periodSelectorMap?.[value] ?? value }}
+          <feather-icon name="chevron-down" class="ms-1 w-3 h-3" />
+        </div>
+      </template>
+    </Dropdown>
+    <div v-if="value === 'Custom'" class="flex items-center space-x-1">
+      <input
+        type="date"
+        class="bg-transparent border border-gray-300 dark:border-gray-700 rounded px-1 text-sm dark:text-gray-300 h-6"
+        :value="customFrom"
+        @change="(e) => changeCustomDate('from', (e.target as HTMLInputElement).value)"
+      />
+      <span class="text-gray-500">-</span>
+      <input
+        type="date"
+        class="bg-transparent border border-gray-300 dark:border-gray-700 rounded px-1 text-sm dark:text-gray-300 h-6"
+        :value="customTo"
+        @change="(e) => changeCustomDate('to', (e.target as HTMLInputElement).value)"
+      />
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -54,26 +71,34 @@ export default defineComponent({
     Dropdown,
   },
   props: {
-    value: { type: String as PropType<PeriodKey>, default: 'This Year' },
+    value: { type: String as PropType<PeriodKey>, default: 'Today' },
     options: {
       type: Array as PropType<PeriodKey[]>,
-      default: () => ['This Year', 'This Quarter', 'This Month', 'YTD'],
+      default: () => ['Today', 'This Month', 'This Quarter', 'This Year', 'YTD', 'Custom'],
     },
   },
-  emits: ['change'],
+  emits: ['change', 'change-custom'],
   data() {
     return {
       periodSelectorMap: {} as Record<PeriodKey | '', string>,
       periodOptions: [] as { label: string; action: () => void }[],
+      customFrom: '',
+      customTo: '',
     };
   },
   mounted() {
+    const today = new Date().toISOString().split('T')[0];
+    this.customFrom = today;
+    this.customTo = today;
+
     this.periodSelectorMap = {
       '': t`Set Period`,
+      'Today': t`Today`,
       'This Year': t`This Year`,
       YTD: t`Year to Date`,
       'This Quarter': t`This Quarter`,
       'This Month': t`This Month`,
+      'Custom': t`Custom`,
     };
 
     this.periodOptions = this.options.map((option) => {
@@ -88,9 +113,20 @@ export default defineComponent({
   methods: {
     selectOption(value: PeriodKey) {
       this.$emit('change', value);
+      if (value === 'Custom') {
+        this.$emit('change-custom', this.customFrom, this.customTo);
+      }
       (this.$refs.dropdown as InstanceType<typeof Dropdown>).toggleDropdown(
         false
       );
+    },
+    changeCustomDate(type: 'from' | 'to', value: string) {
+      if (type === 'from') {
+        this.customFrom = value;
+      } else {
+        this.customTo = value;
+      }
+      this.$emit('change-custom', this.customFrom, this.customTo);
     },
   },
 });

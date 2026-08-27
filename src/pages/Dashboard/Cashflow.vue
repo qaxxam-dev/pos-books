@@ -28,6 +28,7 @@
         :value="period"
         :options="periodOptions"
         @change="(value) => (period = value)"
+        @change-custom="(from, to) => { customFrom = from; customTo = to; }"
       />
       <div v-else class="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded" />
     </div>
@@ -83,7 +84,6 @@ export default defineComponent({
   data: () => ({
     data: [] as { inflow: number; outflow: number; yearmonth: string }[],
     periodList: [],
-    periodOptions: ['This Year', 'This Quarter', 'YTD'],
     hasData: false,
   }),
   computed: {
@@ -129,16 +129,23 @@ export default defineComponent({
   methods: {
     async setData() {
       const { periodList, fromDate, toDate } = getDatesAndPeriodList(
-        this.period as PeriodKey
+        this.period as PeriodKey,
+        this.customFrom,
+        this.customTo
       );
 
       const data = await fyo.db.getCashflow(fromDate.toISO(), toDate.toISO());
       const dataMap = getMapFromList(data, 'yearmonth');
       this.data = periodList.map((p) => {
-        const key = p.toFormat('yyyy-MM');
-        const item = dataMap[key];
+        let key = p.toFormat('yyyy-MM');
+        // Handle Today/Custom where the period might just be a day
+        if (this.period === 'Today') {
+          key = p.toFormat('yyyy-MM-dd');
+        }
+        
+        const item = dataMap[p.toFormat('yyyy-MM')]; // the DB returns yearmonth
         if (item) {
-          return item;
+          return { ...item, yearmonth: key };
         }
 
         return {

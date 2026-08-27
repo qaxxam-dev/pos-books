@@ -5,22 +5,30 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
   props: {
-    commonPeriod: { type: String as PropType<PeriodKey>, default: 'This Year' },
+    commonPeriod: { type: String as PropType<PeriodKey>, default: 'Today' },
+    commonCustomFrom: { type: String, default: '' },
+    commonCustomTo: { type: String, default: '' },
   },
   emits: ['period-change'],
   data() {
     return {
-      period: 'This Year' as PeriodKey,
+      period: 'Today' as PeriodKey,
+      customFrom: '',
+      customTo: '',
       periodOptions: [
+        'Today',
+        'This Month',
+        'This Quarter',
         'This Year',
         'YTD',
-        'This Quarter',
-        'This Month',
+        'Custom',
       ] as PeriodKey[],
     };
   },
   watch: {
     period: 'periodChange',
+    customFrom: 'periodChange',
+    customTo: 'periodChange',
     commonPeriod(val: PeriodKey) {
       if (!this.periodOptions.includes(val)) {
         return;
@@ -28,10 +36,16 @@ export default defineComponent({
 
       this.period = val;
     },
+    commonCustomFrom(val: string) {
+      this.customFrom = val;
+    },
+    commonCustomTo(val: string) {
+      this.customTo = val;
+    },
   },
   methods: {
     async periodChange() {
-      this.$emit('period-change', this.period);
+      this.$emit('period-change', this.period, this.customFrom, this.customTo);
       await this.setData();
     },
     async setData() {

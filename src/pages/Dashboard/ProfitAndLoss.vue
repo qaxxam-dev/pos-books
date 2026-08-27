@@ -7,6 +7,7 @@
           :value="period"
           :options="periodOptions"
           @change="(value) => (period = value)"
+          @change-custom="(from, to) => { customFrom = from; customTo = to; }"
         />
       </template>
     </SectionHeader>
@@ -62,7 +63,6 @@ export default defineComponent({
   data: () => ({
     data: [] as { yearmonth: string; balance: number }[],
     hasData: false,
-    periodOptions: ['This Year', 'This Quarter', 'YTD'],
   }),
   computed: {
     chartData() {
@@ -96,7 +96,9 @@ export default defineComponent({
   methods: {
     async setData() {
       const { fromDate, toDate, periodList } = getDatesAndPeriodList(
-        this.period
+        this.period,
+        this.customFrom,
+        this.customTo
       );
 
       const data = await fyo.db.getIncomeAndExpenses(
@@ -111,9 +113,13 @@ export default defineComponent({
       );
 
       this.data = periodList.map((d) => {
-        const key = d.toFormat('yyyy-MM');
-        const inc = incomes[key] ?? 0;
-        const exp = expenses[key] ?? 0;
+        let key = d.toFormat('yyyy-MM');
+        if (this.period === 'Today') {
+          key = d.toFormat('yyyy-MM-dd');
+        }
+
+        const inc = incomes[d.toFormat('yyyy-MM')] ?? 0;
+        const exp = expenses[d.toFormat('yyyy-MM')] ?? 0;
         return { yearmonth: key, balance: inc - exp };
       });
       this.hasData = data.income.length > 0 || data.expense.length > 0;
