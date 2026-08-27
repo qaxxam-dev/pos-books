@@ -83,7 +83,7 @@
 
     <div
       class="bg-gray-25 dark:bg-gray-875 grid grid-cols-12 gap-2 p-4"
-      style="height: calc(100vh - var(--h-row-largest))"
+      style="height: calc(90vh - var(--h-row-largest))"
     >
       <div
         class="
@@ -161,7 +161,7 @@
       </div>
 
       <div class="col-span-7">
-        <div class="flex flex-col gap-3" style="height: calc(100vh - 6rem)">
+        <div class="flex flex-col gap-3" style="height: calc(90vh - 6rem)">
           <div
             class="
               p-4

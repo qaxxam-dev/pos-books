@@ -307,7 +307,7 @@
           flex flex-col
           dark:bg-gray-850 dark:border-gray-800
         "
-        style="height: calc(100vh - 6rem)"
+        style="height: calc(90vh - 6rem)"
       >
         <div class="rounded-md p-4 col-span-5">
           <div class="flex gap-x-2">
