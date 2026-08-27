@@ -23,14 +23,14 @@
       </div>
       <div v-else class="w-16 h-5 bg-gray-200 dark:bg-gray-700 rounded" />
 
-      <PeriodSelector
+      <!-- <PeriodSelector
         v-if="hasData"
         :value="period"
         :options="periodOptions"
         @change="(value) => (period = value)"
         @change-custom="(from, to) => { customFrom = from; customTo = to; }"
       />
-      <div v-else class="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded" />
+      <div v-else class="w-20 h-5 bg-gray-200 dark:bg-gray-700 rounded" /> -->
     </div>
 
     <!-- Line Chart -->

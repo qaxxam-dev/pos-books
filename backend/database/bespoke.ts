@@ -38,7 +38,8 @@ export class BespokeQueries {
     const expenseAccounts = db
       .knex!.select('name')
       .from('Account')
-      .where('rootType', 'Expense');
+      .where('rootType', 'Expense')
+      .andWhere('name', '!=', 'Cost of Goods Sold');
 
     const topExpenses = await db
       .knex!.select({
@@ -101,7 +102,7 @@ export class BespokeQueries {
       from AccountingLedgerEntry
       where
         reverted = false and
-        date between date(?) and date(?) and
+        date between ? and ? and
         account in (
           select name
           from Account
@@ -117,17 +118,29 @@ export class BespokeQueries {
       from AccountingLedgerEntry
       where
         reverted = false and
-        date between date(?) and date(?) and
+        date between ? and ? and
         account in (
           select name
           from Account
-          where rootType = 'Expense'
+          where rootType = 'Expense' and name != 'Cost of Goods Sold'
         )
       group by yearmonth`,
       [fromDate, toDate]
     )) as IncomeExpense['expense'];
 
-    return { income, expense };
+    const cogs = (await db.knex!.raw(
+      `
+      select sum(cast(debit as real) - cast(credit as real)) as balance, strftime('%Y-%m', date) as yearmonth
+      from AccountingLedgerEntry
+      where
+        reverted = false and
+        date between ? and ? and
+        account = 'Cost of Goods Sold'
+      group by yearmonth`,
+      [fromDate, toDate]
+    )) as IncomeExpense['expense'];
+
+    return { income, expense, cogs };
   }
 
   static async getTotalCreditAndDebit(db: DatabaseCore) {

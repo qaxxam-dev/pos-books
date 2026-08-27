@@ -4,7 +4,7 @@
     <SectionHeader>
       <template #title>{{ title }}</template>
       <template #action>
-        <PeriodSelector :value="period" :options="periodOptions" @change="(value) => (period = value)" @change-custom="(from, to) => { customFrom = from; customTo = to; }" />
+        <!-- <PeriodSelector :value="period" :options="periodOptions" @change="(value) => (period = value)" @change-custom="(from, to) => { customFrom = from; customTo = to; }" /> -->
       </template>
     </SectionHeader>
 

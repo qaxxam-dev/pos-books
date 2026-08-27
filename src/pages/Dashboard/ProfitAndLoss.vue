@@ -3,12 +3,12 @@
     <SectionHeader>
       <template #title>{{ t`Profit and Loss` }}</template>
       <template #action>
-        <PeriodSelector
+        <!-- <PeriodSelector
           :value="period"
           :options="periodOptions"
           @change="(value) => (period = value)"
           @change-custom="(from, to) => { customFrom = from; customTo = to; }"
-        />
+        /> -->
       </template>
     </SectionHeader>
     <BarChart
@@ -111,6 +111,11 @@ export default defineComponent({
         'yearmonth',
         'balance'
       );
+      const cogs = getValueMapFromList(
+        ((data as any).cogs as any[]) || ([] as any[]),
+        'yearmonth',
+        'balance'
+      );
 
       this.data = periodList.map((d) => {
         let key = d.toFormat('yyyy-MM');
@@ -120,9 +125,10 @@ export default defineComponent({
 
         const inc = incomes[d.toFormat('yyyy-MM')] ?? 0;
         const exp = expenses[d.toFormat('yyyy-MM')] ?? 0;
-        return { yearmonth: key, balance: inc - exp };
+        const cog = cogs[d.toFormat('yyyy-MM')] ?? 0;
+        return { yearmonth: key, balance: inc - exp - cog };
       });
-      this.hasData = data.income.length > 0 || data.expense.length > 0;
+      this.hasData = data.income.length > 0 || data.expense.length > 0 || ((data as any).cogs || []).length > 0;
     },
   },
 });

@@ -29,6 +29,14 @@
       style="height: calc(100vh - var(--h-row-largest) - 1px)"
     >
       <div style="min-width: var(--w-desk-fixed)" class="overflow-auto">
+        </div>
+        <DashboardTotals
+          :common-period="period"
+          :common-custom-from="customFrom"
+          :common-custom-to="customTo"
+          @period-change="handlePeriodChange"
+        />
+        <hr class="dark:border-gray-800" />
         <Cashflow
           class="p-4"
           :common-period="period"
@@ -75,8 +83,6 @@
             :dark-mode="darkMode"
             @period-change="handlePeriodChange"
           />
-        </div>
-        <hr class="dark:border-gray-800" />
       </div>
     </div>
   </div>
@@ -89,6 +95,7 @@ import Cashflow from './Cashflow.vue';
 import Expenses from './Expenses.vue';
 import PeriodSelector from './PeriodSelector.vue';
 import ProfitAndLoss from './ProfitAndLoss.vue';
+import DashboardTotals from './DashboardTotals.vue';
 import { docsPathRef } from 'src/utils/refs';
 
 export default {
@@ -100,6 +107,7 @@ export default {
     Expenses,
     PeriodSelector,
     UnpaidInvoices,
+    DashboardTotals,
   },
   props: {
     darkMode: { type: Boolean, default: false },
