@@ -595,7 +595,7 @@ export default defineComponent({
         matchedItem = allItems.find(
           (item) => item.itemCode === itemCode || item.barcode === itemCode
         );
-      } else if (searchTerm.length === 12) {
+      } else if (searchTerm) {
         matchedItem = allItems.find((item) => item.barcode === searchTerm);
       }
 

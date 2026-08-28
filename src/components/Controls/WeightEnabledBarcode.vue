@@ -192,10 +192,6 @@ export default defineComponent({
       }, 20);
     },
     async setItemFromBarcode() {
-      if (this.barcode.length < 12) {
-        return;
-      }
-
       await this.selectItem(this.barcode);
 
       this.barcode = '';

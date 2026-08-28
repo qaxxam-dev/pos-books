@@ -66,9 +66,6 @@ export default defineComponent({
     },
     async selectItem(code: string) {
       const barcode = code.trim();
-      if (!/^[A-Za-z0-9]{12,}$/.test(barcode)) {
-        return this.error(this.t`Invalid barcode value ${barcode}.`);
-      }
 
       /**
        * Between two entries of the same item, this adds
@@ -124,10 +121,6 @@ export default defineComponent({
       }, 20);
     },
     async setItemFromBarcode() {
-      if (this.barcode.length < 12) {
-        return;
-      }
-
       await this.selectItem(this.barcode);
 
       this.barcode = '';
