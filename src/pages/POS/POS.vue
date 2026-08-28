@@ -1,6 +1,6 @@
 <template>
-  <div class="flex-col">
-    <PageHeader :title="t`Point of Sale`">
+  <div class="flex flex-col h-screen overflow-hidden">
+    <PageHeader :title="t`Point of Sale`" class="shrink-0">
       <slot>
         <Button
           class="bg-red-500 dark:bg-red-700"
@@ -11,6 +11,7 @@
       </slot>
     </PageHeader>
     <ClassicPOS
+      class="flex-1 min-h-0"
       v-if="
         posProfile?.posUI === 'Classic' ||
         (!posProfile?.posUI && fyo.singles.POSSettings?.posUI === 'Classic')
@@ -73,6 +74,7 @@
       @batch-selected="handleBatchSelected"
     />
     <ModernPOS
+      class="flex-1 min-h-0"
       v-else
       :table-view="tableView"
       :profile="(posProfile as POSProfile)"

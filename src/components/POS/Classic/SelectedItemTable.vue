@@ -31,8 +31,7 @@
   </Row>
 
   <div
-    class="overflow-y-auto overflow-x-auto custom-scroll custom-scroll-thumb1"
-    style="height: 50vh"
+    class="overflow-y-auto overflow-x-auto custom-scroll custom-scroll-thumb1 flex-1 min-h-0"
   >
     <Row
       v-for="row in sinvDoc.items"

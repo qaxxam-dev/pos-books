@@ -10,8 +10,8 @@
       text-black
       overflow-y-auto
       custom-scroll custom-scroll-thumb2
+      h-full
     "
-    style="height: 83vh"
   >
     <!-- Items Grid -->
     <div

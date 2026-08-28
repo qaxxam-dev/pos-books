@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="flex flex-col h-full overflow-hidden">
     <OpenPOSShiftModal
       v-if="!isPosShiftOpen"
       :open-modal="!isPosShiftOpen"
@@ -82,8 +82,7 @@
     />
 
     <div
-      class="bg-gray-25 dark:bg-gray-875 grid grid-cols-12 gap-2 p-4"
-      style="height: calc(90vh - var(--h-row-largest))"
+      class="bg-gray-25 dark:bg-gray-875 grid grid-cols-12 gap-2 p-4 flex-1 min-h-0"
     >
       <div
         class="
@@ -92,10 +91,11 @@
           border
           rounded-md
           dark:border-gray-800 dark:bg-gray-850
+          flex flex-col min-h-0
         "
       >
-        <div class="rounded-md p-4 col-span-5">
-          <div class="flex gap-x-2">
+        <div class="rounded-md p-4 flex flex-col h-full min-h-0">
+          <div class="flex gap-x-2 shrink-0">
             <!-- Item Search -->
             <MultiLabelLink
               class="w-full"
@@ -130,23 +130,25 @@
             />
           </div>
 
-          <ItemsTable
-            v-if="tableView"
-            :items="items"
-            :item-qty-map="itemQuantityMap as ItemQtyMap"
-            :item-visibility="itemVisibility"
-            @add-item="(item) => emitEvent('addItem', item)"
-          />
+          <div class="flex-1 min-h-0 mt-2 mb-2 flex flex-col">
+            <ItemsTable
+              v-if="tableView"
+              :items="items"
+              :item-qty-map="itemQuantityMap as ItemQtyMap"
+              :item-visibility="itemVisibility"
+              @add-item="(item) => emitEvent('addItem', item)"
+            />
 
-          <ItemsGrid
-            v-else
-            :items="items"
-            :item-qty-map="itemQuantityMap as ItemQtyMap"
-            :item-visibility="itemVisibility"
-            @add-item="(item) => emitEvent('addItem', item)"
-          />
+            <ItemsGrid
+              v-else
+              :items="items"
+              :item-qty-map="itemQuantityMap as ItemQtyMap"
+              :item-visibility="itemVisibility"
+              @add-item="(item) => emitEvent('addItem', item)"
+            />
+          </div>
 
-          <div class="flex fixed bottom-0 p-1 mb-7 gap-x-3">
+          <div class="flex gap-x-3 shrink-0 mt-auto pt-1">
             <POSQuickActions
               :sinv-doc="sinvDoc"
               :loyalty-points="loyaltyPoints"
@@ -160,23 +162,24 @@
         </div>
       </div>
 
-      <div class="col-span-7">
-        <div class="flex flex-col gap-3" style="height: calc(90vh - 6rem)">
+      <div class="col-span-7 flex flex-col min-h-0">
+        <div class="flex flex-col gap-3 h-full min-h-0">
           <div
             class="
               p-4
               bg-white
               border
               rounded-md
-              grow
-              h-full
+              flex flex-col
+              min-h-0
+              flex-1
               dark:border-gray-800 dark:bg-gray-850
             "
           >
             <!-- Customer Search -->
             <MultiLabelLink
               v-if="sinvDoc?.fieldMap"
-              class="flex-shrink-0"
+              class="shrink-0"
               secondary-link="phone"
               :border="true"
               :value="sinvDoc?.party"
@@ -185,14 +188,16 @@
               @change="(value:string) => $emit('setCustomer',value)"
             />
 
-            <SelectedItemTable
-              :expanded-batch-id="expandedBatchId"
-              @set-expanded-batch-id="
-                (rowName) => $emit('setExpandedBatchId', rowName)
-              "
-              @apply-pricing-rule="emitEvent('applyPricingRule')"
-              @selected-row="(row) => $emit('selectedRow', row)"
-            />
+            <div class="flex-1 min-h-0 mt-3 flex flex-col">
+              <SelectedItemTable
+                :expanded-batch-id="expandedBatchId"
+                @set-expanded-batch-id="
+                  (rowName) => $emit('setExpandedBatchId', rowName)
+                "
+                @apply-pricing-rule="emitEvent('applyPricingRule')"
+                @selected-row="(row) => $emit('selectedRow', row)"
+              />
+            </div>
           </div>
 
           <div
@@ -201,6 +206,7 @@
               bg-white
               border
               rounded-md
+              shrink-0
               dark:border-gray-800 dark:bg-gray-850
             "
           >
