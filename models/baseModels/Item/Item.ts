@@ -170,55 +170,7 @@ export class Item extends Doc {
     }),
   };
 
-  validations: ValidationMap = {
-    barcode: (value: DocValue) => {
-      if (value && !(value as string).match(/^\d{12}$/)) {
-        throw new ValidationError(
-          this.fyo.t`Barcode must be exactly 12 digits.`
-        );
-      }
-    },
-    rate: (value: DocValue) => {
-      if ((value as Money).isNegative()) {
-        throw new ValidationError(this.fyo.t`Rate can't be negative.`);
-      }
-    },
-    hsnCode: (value: DocValue) => {
-      if (value && !(value as string).match(/^\d{4,8}$/)) {
-        throw new ValidationError(this.fyo.t`Invalid HSN Code.`);
-      }
-    },
-    serialNumberSeries: (value: DocValue) => {
-      if (!value) {
-        return;
-      }
-
-      const series = (value as string).trim();
-      const invalidChars = /[/\=\?\&\%]/;
-
-      if (invalidChars.test(series)) {
-        throw new ValidationError(
-          this.fyo
-            .t`Serial Number Series cannot contain the following characters: /, ?, &, =, %`
-        );
-      }
-    },
-    batchSeries: (value: DocValue) => {
-      if (!value) {
-        return;
-      }
-
-      const series = (value as string).trim();
-      const invalidChars = /[/\=\?\&\%]/;
-
-      if (invalidChars.test(series)) {
-        throw new ValidationError(
-          this.fyo
-            .t`Batch Series cannot contain the following characters: /, ?, &, =, %`
-        );
-      }
-    },
-  };
+  validations: ValidationMap = {};
 
   static getActions(fyo: Fyo): Action[] {
     return [
