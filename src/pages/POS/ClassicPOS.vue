@@ -82,7 +82,7 @@
     />
 
     <div
-      class="bg-gray-25 dark:bg-gray-875 grid grid-cols-12 gap-2 p-4 flex-1 min-h-0"
+      class="bg-gray-25 dark:bg-gray-875 grid grid-cols-12 gap-4 p-4 pb-6 flex-1 min-h-0"
     >
       <div
         class="
@@ -148,7 +148,7 @@
             />
           </div>
 
-          <div class="flex gap-x-3 shrink-0 mt-auto pt-1">
+          <div class="flex gap-x-3 shrink-0 mt-auto pt-4 pb-2">
             <POSQuickActions
               :sinv-doc="sinvDoc"
               :loyalty-points="loyaltyPoints"
@@ -202,7 +202,7 @@
 
           <div
             class="
-              p-3
+              p-5
               bg-white
               border
               rounded-md
