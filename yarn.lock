@@ -1347,6 +1347,11 @@ builder-util@24.8.1:
     stat-mode "^1.0.0"
     temp-file "^3.4.0"
 
+bytenode@^1.5.3:
+  version "1.6.0"
+  resolved "https://registry.npmjs.org/bytenode/-/bytenode-1.6.0.tgz"
+  integrity sha512-4FAoCc0ixe18UCqlQr1hJKb3o6tNN6J35e+NCu62W87sVqGkW+6lL0FEwv0hYojqDM/6SunCllc9mZOYnDhjhA==
+
 bytes@^3.0.0:
   version "3.1.1"
   resolved "https://registry.npmjs.org/bytes/-/bytes-3.1.1.tgz"
@@ -3994,6 +3999,11 @@ node-gyp@^9.0.0:
     semver "^7.3.5"
     tar "^6.1.2"
     which "^2.0.2"
+
+node-machine-id@^1.1.12:
+  version "1.1.12"
+  resolved "https://registry.npmjs.org/node-machine-id/-/node-machine-id-1.1.12.tgz"
+  integrity sha512-QNABxbrPa3qEIfrE6GOJ7BYIuignnJw7iQ2YPbc3Nla1HzRJjXzZOiikfF8m7eAMfichLt3M4VgLOetqgDmgGQ==
 
 node-releases@^2.0.1:
   version "2.0.1"
