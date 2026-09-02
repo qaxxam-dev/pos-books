@@ -1,8 +1,8 @@
 ; Script generated for Inno Setup Compiler
 #define MyAppName "POS Books"
 #define MyAppVersion "0.37.0"
-#define MyAppPublisher "Your Company Name"
-#define MyAppURL "https://yourwebsite.com"
+#define MyAppPublisher "AlqaTecg"
+#define MyAppURL "http://alqatech.in/"
 #define MyAppExeName "POS Books.exe"
 
 [Setup]

@@ -19,7 +19,7 @@ export function getMainProcessCommonConfig(root) {
     sourcesContent: false,
     platform: 'node',
     target: 'node20',
-    external: ['knex', 'electron', 'better-sqlite3', 'electron-store'],
+    external: ['knex', 'electron', 'better-sqlite3', 'electron-store', 'bytenode', 'node-machine-id'],
     plugins: [excludeVendorFromSourceMap],
     write: true,
   };
