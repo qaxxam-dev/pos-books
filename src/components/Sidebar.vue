@@ -310,7 +310,7 @@ export default defineComponent({
 
           if (g.items) {
             let activeItem = g.items.filter(
-              ({ route }) => route === fullPath || fullPath.startsWith(route)
+              ({ route }) => route === fullPath || (fullPath.startsWith(route) && route !== '/')
             );
 
             if (activeItem.length) {

@@ -254,9 +254,33 @@ export default function registerIpcMainActionListeners(main: Main) {
   ipcMain.handle(
     IPC_ACTIONS.SEND_API_REQUEST,
     async (e, endpoint: string, options: RequestInit | undefined) => {
-      return sendAPIRequest(endpoint, options);
+      return sendAPIRequest(endpoint, options as any);
     }
   );
+
+  ipcMain.handle(IPC_ACTIONS.GET_MACHINE_ID, async () => {
+    try {
+      const { machineId } = require('node-machine-id');
+      return await machineId();
+    } catch (e) {
+      return 'UNKNOWN_MACHINE_ID';
+    }
+  });
+
+  ipcMain.handle(IPC_ACTIONS.VERIFY_LICENSE, async (_, key: string) => {
+    try {
+      const { machineId } = require('node-machine-id');
+      const crypto = require('crypto');
+      const id = await machineId();
+      const SECRET_SALT = 'e84825f600edcf5117bbb960ca276b87';
+      const hash = crypto.createHash('sha256');
+      hash.update(id + SECRET_SALT);
+      const expectedKey = hash.digest('hex').substring(0, 16).toUpperCase();
+      return key.trim() === expectedKey;
+    } catch (e) {
+      return false;
+    }
+  });
 
   /**
    * Database Related Actions

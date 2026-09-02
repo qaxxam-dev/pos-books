@@ -158,6 +158,18 @@ function getCompleteSidebar(): SidebarConfig {
       name: 'dashboard',
       route: '/',
       icon: 'dashboard',
+      items: [
+        {
+          label: t`Overview`,
+          name: 'overview',
+          route: '/',
+        },
+        {
+          label: t`Daybook`,
+          name: 'daybook',
+          route: '/daybook',
+        },
+      ],
     },
     {
       label: t`Sales`,

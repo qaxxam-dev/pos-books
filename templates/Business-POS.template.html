@@ -107,10 +107,17 @@
       </div>
     </div>
 
-    <div v-for="(row,index) in doc.paymentDetails">
+    <div v-for="(row,index) in doc.paymentDetails" :key="index">
       <div class="w-auto grid grid-cols-3 border-black text-xs">
         <div class="row-start-2">{{ row.paymentMethod }}</div>
         <div class="row-start-2 font-medium text-right">{{ row.amount }}</div>
+        <div class="row-start-2 font-medium text-right">
+          {{ row.outstandingAmount }}
+        </div>
+      </div>
+      <div v-if="row.writeoffRaw > 0" class="w-auto grid grid-cols-3 border-black text-xs">
+        <div class="row-start-2">{{ t`Write Off` }}</div>
+        <div class="row-start-2 font-medium text-right">{{ row.writeoff }}</div>
         <div class="row-start-2 font-medium text-right">
           {{ row.outstandingAmount }}
         </div>

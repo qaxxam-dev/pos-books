@@ -36,6 +36,8 @@ export enum IPC_ACTIONS {
   DELETE_FILE = 'delete-file',
   GET_DB_DEFAULT_PATH = 'get-db-default-path',
   SEND_API_REQUEST = 'send-api-request',
+  GET_MACHINE_ID = 'get-machine-id',
+  VERIFY_LICENSE = 'verify-license',
   // Database messages
   DB_CREATE = 'db-create',
   DB_CONNECT = 'db-connect',

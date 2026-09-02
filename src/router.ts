@@ -1,6 +1,7 @@
 import ChartOfAccounts from 'src/pages/ChartOfAccounts.vue';
 import CommonForm from 'src/pages/CommonForm/CommonForm.vue';
 import Dashboard from 'src/pages/Dashboard/Dashboard.vue';
+import Daybook from 'src/pages/Dashboard/Daybook.vue';
 import GetStarted from 'src/pages/GetStarted.vue';
 import ImportWizard from 'src/pages/ImportWizard.vue';
 import ListView from 'src/pages/ListView/ListView.vue';
@@ -12,14 +13,23 @@ import Settings from 'src/pages/Settings/Settings.vue';
 import TemplateBuilder from 'src/pages/TemplateBuilder/TemplateBuilder.vue';
 import CustomizeForm from 'src/pages/CustomizeForm/CustomizeForm.vue';
 import POS from 'src/pages/POS/POS.vue';
+import Activation from 'src/pages/Activation.vue';
 import type { HistoryState } from 'vue-router';
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import { historyState } from './utils/refs';
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/activation',
+    component: Activation,
+  },
+  {
     path: '/',
     component: Dashboard,
+  },
+  {
+    path: '/daybook',
+    component: Daybook,
   },
   {
     path: '/get-started',
@@ -140,6 +150,21 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({ routes, history: createWebHistory() });
+
+router.beforeEach(async (to, from, next) => {
+  const storedKey = localStorage.getItem('app_license_key');
+  let isLicensed = false;
+  
+  if (storedKey) {
+    isLicensed = await window.ipc.verifyLicense(storedKey);
+  }
+
+  if (!isLicensed && to.path !== '/activation') {
+    next('/activation');
+  } else {
+    next();
+  }
+});
 
 router.afterEach(({ fullPath }) => {
   const state = history.state as HistoryState;

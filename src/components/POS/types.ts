@@ -48,6 +48,8 @@ export type PosEmits =
   | 'saveAndContinue'
   | 'handlePaymentAction'
   | 'setTransferClearanceDate'
+  | 'setPaymentEntries'
+  | 'setWriteOffAmount'
   | 'batchSelected'; 
 
 export interface POSItem {
@@ -63,3 +65,13 @@ export interface POSItem {
   hasSerialNumber: boolean;
   itemGroup?: string;
 }
+
+export interface POSPaymentEntry {
+  id: string;
+  paymentMethod: string;
+  amount: Money;
+  referenceId?: string;
+  clearanceDate?: Date;
+  isCash?: boolean;
+}
+

@@ -70,6 +70,8 @@
       @set-transfer-clearance-date="setTransferClearanceDate"
       @save-and-continue="handleSaveAndContinue"
       @handle-payment-action="handlePaymentAction"
+      @set-payment-entries="setPaymentEntries"
+      @set-write-off-amount="setWriteOffAmount"
       @selected-row="setQuickQtySelectedRow"
       @batch-selected="handleBatchSelected"
     />
@@ -132,6 +134,8 @@
       @set-transfer-clearance-date="setTransferClearanceDate"
       @selected-row="setQuickQtySelectedRow"
       @handle-payment-action="handlePaymentAction"
+      @set-payment-entries="setPaymentEntries"
+      @set-write-off-amount="setWriteOffAmount"
       @batch-selected="handleBatchSelected"
     />
   </div>
@@ -181,6 +185,7 @@ import {
   POSItem,
   ItemQtyMap,
   ItemSerialNumbers,
+  POSPaymentEntry,
 } from 'src/components/POS/types';
 import { ValidationError } from 'fyo/utils/errors';
 import { getExistingActiveSerialNumbersForItem } from 'models/inventory/helpers';
@@ -203,6 +208,8 @@ export default defineComponent({
       itemQtyMap: computed(() => this.itemQtyMap),
       paidAmount: computed(() => this.paidAmount),
       paymentMethod: computed(() => this.paymentMethod),
+      paymentEntries: computed(() => this.paymentEntries),
+      writeOffAmount: computed(() => this.writeOffAmount),
       transferRefNo: computed(() => this.transferRefNo),
       itemDiscounts: computed(() => this.itemDiscounts),
       transferAmount: computed(() => this.transferAmount),
@@ -258,6 +265,9 @@ export default defineComponent({
       transferRefNo: undefined as string | undefined,
       defaultCustomer: undefined as string | undefined,
       transferClearanceDate: new Date() as Date | undefined,
+
+      paymentEntries: [] as POSPaymentEntry[],
+      writeOffAmount: fyo.pesa(0),
 
       paymentDoc: {} as Payment,
       sinvDoc: {} as SalesInvoice,
@@ -1210,50 +1220,93 @@ export default defineComponent({
         });
       }
     },
+    setPaymentEntries(entries: POSPaymentEntry[]) {
+      this.paymentEntries = entries || [];
+    },
+    setWriteOffAmount(amount: Money) {
+      this.writeOffAmount = amount || fyo.pesa(0);
+    },
     async makePayment(shouldPrint: boolean) {
-      this.paymentDoc = this.sinvDoc.getPayment() as Payment;
-      if (!this.paymentDoc) {
-        return null;
-      }
-
-      const paymentMethod = this.paymentMethod;
-
-      await this.paymentDoc.set('paymentMethod', paymentMethod);
-      await this.paymentDoc.set('amount', this.fyo.pesa(this.paidAmount.float));
-      await this.paymentDoc.set('referenceType', ModelNameEnum.SalesInvoice);
-
-      const paymentMethodDoc = await this.paymentDoc.loadAndGetLink(
-        'paymentMethod'
+      const activeEntries = (this.paymentEntries || []).filter(
+        (entry) => entry.amount && !entry.amount.isZero() && entry.amount.isPositive()
       );
 
-      if (paymentMethodDoc?.type !== 'Cash') {
-        await this.paymentDoc.setMultiple({
-          referenceId: this.transferRefNo,
-          clearanceDate: this.transferClearanceDate,
-        });
-      }
-
-      if (paymentMethodDoc?.type === 'Cash') {
-        await this.paymentDoc.setMultiple({
-          paymentAccount: this.defaultPOSCashAccount,
-        });
-      }
-
-      this.paymentDoc.once('afterSubmit', () => {
-        showToast({
-          type: 'success',
-          message: t`Payment ${this.paymentDoc.name as string} is Saved`,
-          duration: 'short',
-        });
-      });
+      const writeOff = this.writeOffAmount ?? fyo.pesa(0);
 
       try {
-        await this.paymentDoc?.sync();
-        await this.paymentDoc?.submit();
+        if (activeEntries.length > 0) {
+          for (let i = 0; i < activeEntries.length; i++) {
+            const entry = activeEntries[i];
+            const isLast = i === activeEntries.length - 1;
+
+            const paymentDoc = this.sinvDoc.getPayment() as Payment;
+            if (!paymentDoc) continue;
+
+            await paymentDoc.set('paymentMethod', entry.paymentMethod);
+            await paymentDoc.set('amount', entry.amount as any);
+            await paymentDoc.set('referenceType', ModelNameEnum.SalesInvoice);
+
+            const pmDoc = await paymentDoc.loadAndGetLink('paymentMethod');
+            if (pmDoc?.type !== 'Cash') {
+              await paymentDoc.setMultiple({
+                referenceId: entry.referenceId || this.transferRefNo,
+                clearanceDate: entry.clearanceDate || this.transferClearanceDate || new Date(),
+              });
+            } else {
+              await paymentDoc.setMultiple({
+                paymentAccount: this.defaultPOSCashAccount,
+              });
+            }
+
+            if (isLast && !writeOff.isZero() && writeOff.isPositive()) {
+              await paymentDoc.set('writeoff', writeOff as any);
+            }
+
+            await paymentDoc.sync();
+            await paymentDoc.submit();
+          }
+        } else if (!writeOff.isZero() && writeOff.isPositive()) {
+          const paymentDoc = this.sinvDoc.getPayment() as Payment;
+          if (paymentDoc) {
+            const defaultMethod = this.paymentMethod || 'Cash';
+            await paymentDoc.set('paymentMethod', defaultMethod);
+            await paymentDoc.set('amount', fyo.pesa(0) as any);
+            await paymentDoc.set('writeoff', writeOff as any);
+            await paymentDoc.set('referenceType', ModelNameEnum.SalesInvoice);
+            await paymentDoc.sync();
+            await paymentDoc.submit();
+          }
+        } else if (this.paymentMethod && this.paidAmount && !this.paidAmount.isZero()) {
+          const paymentDoc = this.sinvDoc.getPayment() as Payment;
+          if (paymentDoc) {
+            await paymentDoc.set('paymentMethod', this.paymentMethod);
+            await paymentDoc.set('amount', this.paidAmount as any);
+            await paymentDoc.set('referenceType', ModelNameEnum.SalesInvoice);
+
+            const pmDoc = await paymentDoc.loadAndGetLink('paymentMethod');
+            if (pmDoc?.type !== 'Cash') {
+              await paymentDoc.setMultiple({
+                referenceId: this.transferRefNo,
+                clearanceDate: this.transferClearanceDate,
+              });
+            } else {
+              await paymentDoc.setMultiple({
+                paymentAccount: this.defaultPOSCashAccount,
+              });
+            }
+            await paymentDoc.sync();
+            await paymentDoc.submit();
+          }
+        }
+
+        showToast({
+          type: 'success',
+          message: t`Payment processing complete`,
+          duration: 'short',
+        });
 
         if (shouldPrint) {
           await routeTo(
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             `/print/${this.sinvDoc.schemaName}/${this.sinvDoc.name}`
           );
         }
@@ -1350,6 +1403,8 @@ export default defineComponent({
 
       this.paidAmount = fyo.pesa(0);
       this.transferAmount = fyo.pesa(0);
+      this.paymentEntries = [];
+      this.writeOffAmount = fyo.pesa(0);
       await this.setItems();
 
       if (!this.defaultCustomer) {

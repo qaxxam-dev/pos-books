@@ -154,6 +154,30 @@
         <h3>{{ t`Grand Total` }}</h3>
         <p>{{ doc.grandTotal }}</p>
       </div>
+
+      <!-- Payment Details -->
+      <div
+        class="flex pl-2 justify-between py-2 border-t text-sm text-gray-700"
+        v-for="(row, idx) in doc.paymentDetails"
+        :key="idx"
+      >
+        <h3>Paid ({{ row.paymentMethod }})</h3>
+        <p>{{ row.amount }}</p>
+      </div>
+      <div
+        class="flex pl-2 justify-between py-2 border-t text-sm text-red-600 font-medium"
+        v-if="doc.hasWriteOff"
+      >
+        <h3>{{ t`Write Off` }}</h3>
+        <p>{{ doc.writeOff }}</p>
+      </div>
+      <div
+        class="flex pl-2 justify-between py-2 border-t text-sm font-semibold text-gray-900"
+        v-if="doc.paymentDetails && doc.paymentDetails.length"
+      >
+        <h3>{{ t`Outstanding Balance` }}</h3>
+        <p>{{ doc.paymentDetails[doc.paymentDetails.length - 1].outstandingAmount }}</p>
+      </div>
     </section>
   </footer>
 

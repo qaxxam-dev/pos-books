@@ -62,6 +62,23 @@ export async function getPrintTemplatePropValues(
     if (paymentId && paymentId.length) {
       const paymentDetails = await getPaymentDetails(doc, paymentId);
       (values.doc as PrintTemplateData).paymentDetails = paymentDetails;
+
+      let totalWriteOffPesa = fyo.pesa(0);
+      for (const pId of paymentId) {
+        const pDoc = await fyo.doc.getDoc(ModelNameEnum.Payment, pId);
+        if (pDoc.writeoff) {
+          totalWriteOffPesa = totalWriteOffPesa.add(pDoc.writeoff as Money);
+        }
+      }
+      (values.doc as PrintTemplateData).writeOff = fyo.format(
+        totalWriteOffPesa,
+        ModelNameEnum.Currency
+      );
+      (values.doc as PrintTemplateData).totalWriteOff = fyo.format(
+        totalWriteOffPesa,
+        ModelNameEnum.Currency
+      );
+      (values.doc as PrintTemplateData).hasWriteOff = !totalWriteOffPesa.isZero();
     }
   }
 
@@ -142,11 +159,16 @@ async function getPaymentDetails(doc: Doc, paymentId: string[]) {
 
   for (const payment of paymentIds) {
     const paymentDoc = await doc.fyo.doc.getDoc(ModelNameEnum.Payment, payment);
-    outstandingAmount = outstandingAmount.sub(paymentDoc.amount as Money);
+    const pAmount = (paymentDoc.amount as Money) || doc.fyo.pesa(0);
+    const pWriteOff = (paymentDoc.writeoff as Money) || doc.fyo.pesa(0);
+
+    outstandingAmount = outstandingAmount.sub(pAmount).sub(pWriteOff);
 
     paymentDetails.push({
       amount: doc.fyo.format(paymentDoc.amount, ModelNameEnum.Currency),
       amountPaid: doc.fyo.format(paymentDoc.amountPaid, ModelNameEnum.Currency),
+      writeoff: doc.fyo.format(pWriteOff, ModelNameEnum.Currency),
+      writeoffRaw: pWriteOff.float,
       paymentMethod: paymentDoc.paymentMethod as string,
       outstandingAmount: doc.fyo.format(
         outstandingAmount,

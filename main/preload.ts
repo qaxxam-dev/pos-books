@@ -210,6 +210,14 @@ const ipc = {
     >;
   },
 
+  async getMachineId() {
+    return (await ipcRenderer.invoke(IPC_ACTIONS.GET_MACHINE_ID)) as string;
+  },
+
+  async verifyLicense(key: string) {
+    return (await ipcRenderer.invoke(IPC_ACTIONS.VERIFY_LICENSE, key)) as boolean;
+  },
+
   registerMainProcessErrorListener(listener: IPCRendererListener) {
     ipcRenderer.on(IPC_CHANNELS.LOG_MAIN_PROCESS_ERROR, listener);
   },

@@ -60,6 +60,22 @@ async function buildMainProcessSource() {
     result.errors.forEach((err) => console.error(err));
     process.exit(1);
   }
+
+  // ByteNode compilation
+  const bytenode = await import('bytenode');
+  const mainJsPath = path.join(buildDirPath, mainFileName);
+  await bytenode.compileFile({
+    filename: mainJsPath,
+    output: mainJsPath.replace('.js', '.jsc'),
+    electron: true
+  });
+
+  // Replace main.js with a loader
+  fs.writeFileSync(
+    mainJsPath,
+    "require('bytenode');\nrequire('./main.jsc');",
+    'utf-8'
+  );
 }
 
 async function buildRendererProcessSource() {

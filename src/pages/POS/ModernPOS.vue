@@ -59,6 +59,12 @@
       @set-payment-method="
         (paymentMethod) => emitEvent('setPaymentMethod', paymentMethod)
       "
+      @set-payment-entries="
+        (entries) => $emit('setPaymentEntries', entries)
+      "
+      @set-write-off-amount="
+        (amount) => $emit('setWriteOffAmount', amount)
+      "
       @set-transfer-ref-no="(ref) => emitEvent('setTransferRefNo', ref)"
       @set-transfer-clearance-date="
         (date) => emitEvent('setTransferClearanceDate', date)
@@ -530,6 +536,8 @@ export default defineComponent({
     'routeToSinvList',
     'handleItemSearch',
     'setLoyaltyPoints',
+    'setPaymentEntries',
+    'setWriteOffAmount',
     'setPaymentMethod',
     'setTransferRefNo',
     'applyPricingRule',
