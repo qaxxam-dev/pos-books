@@ -10,11 +10,16 @@ async function generateKey(clientId) {
 }
 
 async function run() {
-  const myId = await machineId.machineId();
+  const argId = process.argv[2];
+  const targetId = argId || await machineId.machineId();
+  
   console.log('--- License Generator ---');
-  console.log('Your Machine ID:', myId);
-  console.log('License Key for this machine:', await generateKey(myId));
-  console.log('\nRun this on your computer, paste the client Machine ID in code to generate their key.');
+  console.log('Target Machine ID:', targetId);
+  console.log('Generated License Key:', await generateKey(targetId));
+  
+  if (!argId) {
+    console.log('\nTo generate for a client, run: node scripts/generateKey.js "CLIENT_MACHINE_ID"');
+  }
 }
 
 run();
