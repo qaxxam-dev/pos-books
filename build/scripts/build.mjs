@@ -62,18 +62,12 @@ async function buildMainProcessSource() {
     process.exit(1);
   }
 
-  // ByteNode compilation
-  const require = createRequire(import.meta.url);
-  const bytenode = require('bytenode');
-  
+  // ByteNode compilation — compile main.js into V8 bytecode
+  const { execSync } = await import('child_process');
   const mainJsPath = path.join(buildDirPath, mainFileName);
-  await bytenode.compileFile({
-    filename: mainJsPath,
-    output: mainJsPath.replace('.js', '.jsc'),
-    electron: true
-  });
+  execSync(`npx bytenode -c "${mainJsPath}"`, { stdio: 'inherit' });
 
-  // Replace main.js with a loader
+  // Replace main.js with a tiny loader that runs the compiled bytecode
   fs.writeFileSync(
     mainJsPath,
     "require('bytenode');\nrequire('./main.jsc');",
