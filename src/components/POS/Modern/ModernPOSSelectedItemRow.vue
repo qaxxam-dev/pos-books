@@ -177,6 +177,21 @@
         />
       </div>
 
+      <div class="px-4 col-span-2 mt-5">
+        <Currency
+          :df="{
+            fieldtype: 'Currency',
+            fieldname: 'valuationRate',
+            label: 'Incoming Rate',
+          }"
+          size="medium"
+          :show-label="true"
+          :border="true"
+          :value="valuationRate"
+          :read-only="true"
+        />
+      </div>
+
       <div
         v-if="row.links?.item && row.links?.item.hasBatch"
         class="px-4 pt-6 col-span-2"
@@ -285,6 +300,7 @@ export default defineComponent({
       itemVisibility: '',
 
       defaultRate: this.row.rate as Money,
+      valuationRate: 0,
     };
   },
   watch: {
@@ -322,6 +338,7 @@ export default defineComponent({
         this.$emit('setExpandedBatchId', undefined);
       } else {
         this.isExapanded = true;
+        this.fetchValuationRate();
         this.$emit('setExpandedBatchId', this.row.name);
       }
     },
@@ -333,6 +350,34 @@ export default defineComponent({
       this.$emit('selectedRow', row, field);
       this.$emit('toggleModal', 'Keyboard');
     },
+
+    async fetchValuationRate() {
+      if (this.valuationRate) return;
+
+      const sles = await fyo.db.getAll('StockLedgerEntry', {
+        fields: ['name', 'rate', 'quantity'],
+        filters: { item: this.row.item as string },
+        orderBy: ['date', 'created'],
+        order: 'desc',
+        limit: 10,
+      });
+
+      const inwardSle = sles?.find((s: any) => (s.quantity as number) > 0);
+
+      if (inwardSle && inwardSle.rate) {
+        this.valuationRate = inwardSle.rate as number;
+      } else {
+        const pii = await fyo.db.getAll('PurchaseInvoiceItem', {
+          fields: ['name', 'rate'],
+          filters: { item: this.row.item as string },
+          limit: 1,
+        });
+        if (pii && pii.length > 0 && pii[0].rate) {
+          this.valuationRate = pii[0].rate as number;
+        }
+      }
+    },
+
     async getAvailableQtyInBatch(): Promise<number> {
       if (!this.row.batch) {
         return 0;
