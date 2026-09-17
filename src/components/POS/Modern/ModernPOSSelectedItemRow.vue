@@ -178,7 +178,29 @@
       </div>
 
       <div class="px-4 col-span-2 mt-5">
+        <div v-if="isRateCipherEnabled">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-gray-500 font-medium">{{ t`Incoming Rate` }}</span>
+            <button
+              type="button"
+              class="p-0.5 text-gray-400 hover:text-gray-700 focus:outline-none transition-colors cursor-pointer"
+              :title="isPeekingRate ? t`Hide Rate` : t`Reveal Rate`"
+              @click="togglePeekRate"
+            >
+              <feather-icon :name="isPeekingRate ? 'eye-off' : 'eye'" class="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div
+            class="w-full text-end px-3 py-1.5 border border-gray-200 rounded text-sm bg-gray-50 text-gray-800 font-mono tracking-wider select-none cursor-pointer"
+            :class="{ 'font-sans tracking-normal font-medium': isPeekingRate }"
+            :title="t`Click to toggle reveal`"
+            @click="togglePeekRate"
+          >
+            {{ displayedValuationRate }}
+          </div>
+        </div>
         <Currency
+          v-else
           :df="{
             fieldtype: 'Currency',
             fieldname: 'valuationRate',
@@ -263,7 +285,8 @@ import { fyo } from 'src/initFyo';
 import { defineComponent, PropType } from 'vue';
 import { SalesInvoiceItem } from 'models/baseModels/SalesInvoiceItem/SalesInvoiceItem';
 import { Money } from 'pesa';
-import { validateSerialNumberCount } from 'src/utils/pos';
+import { validateSerialNumberCount, getPOSRateCipherConfig } from 'src/utils/pos';
+import { encodeNumberToCipher } from 'src/utils/cipher';
 
 export default defineComponent({
   name: 'ModernPOSSelectedItemRow',
@@ -301,7 +324,19 @@ export default defineComponent({
 
       defaultRate: this.row.rate as Money,
       valuationRate: 0,
+      profileCipherSetting: false,
+      profileCipherWord: '',
+      isPeekingRate: false,
+      peekTimer: null as any,
     };
+  },
+  async mounted() {
+    await this.initCipherConfig();
+  },
+  beforeUnmount() {
+    if (this.peekTimer) {
+      clearTimeout(this.peekTimer);
+    }
   },
   watch: {
     expandedBatchId(newVal) {
@@ -321,6 +356,32 @@ export default defineComponent({
     },
   },
   computed: {
+    isRateCipherEnabled(): boolean {
+      const posSettings = fyo.singles.POSSettings;
+      return Boolean(
+        this.profileCipherSetting || posSettings?.encodeIncomingRate
+      );
+    },
+    rateCipherWord(): string {
+      const posSettings = fyo.singles.POSSettings;
+      return (
+        this.profileCipherWord ||
+        posSettings?.rateCipherWord ||
+        'BLACKHORSE'
+      )
+        .trim()
+        .toUpperCase();
+    },
+    displayedValuationRate(): string {
+      if (this.isPeekingRate) {
+        return fyo.format(this.valuationRate, {
+          fieldtype: 'Currency',
+          fieldname: 'valuationRate',
+          label: 'Incoming Rate',
+        });
+      }
+      return encodeNumberToCipher(this.valuationRate, this.rateCipherWord);
+    },
     isUOMConversionEnabled(): boolean {
       return !!fyo.singles.InventorySettings?.enableUomConversions;
     },
@@ -332,6 +393,24 @@ export default defineComponent({
     },
   },
   methods: {
+    async initCipherConfig() {
+      const config = await getPOSRateCipherConfig(fyo);
+      this.profileCipherSetting = config.encodeIncomingRate;
+      this.profileCipherWord = config.rateCipherWord;
+    },
+    togglePeekRate() {
+      this.isPeekingRate = !this.isPeekingRate;
+      if (this.peekTimer) {
+        clearTimeout(this.peekTimer);
+        this.peekTimer = null;
+      }
+      if (this.isPeekingRate) {
+        this.peekTimer = setTimeout(() => {
+          this.isPeekingRate = false;
+          this.peekTimer = null;
+        }, 4000);
+      }
+    },
     toggleExpand() {
       if (this.isExapanded) {
         this.isExapanded = false;

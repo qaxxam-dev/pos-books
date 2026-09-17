@@ -12,6 +12,7 @@ import { fyo } from 'src/initFyo';
 import { safeParseFloat } from 'utils/index';
 import { showToast } from './interactive';
 import { POSClosingShift } from 'models/inventory/Point of Sale/POSClosingShift';
+import { POSProfile } from 'models/baseModels/POSProfile/PosProfile';
 
 export async function getPOSOpeningShiftDoc(
   fyo: Fyo
@@ -300,4 +301,38 @@ export function validateSerialNumberCount(
     });
     throw new ValidationError(errorMessage);
   }
+}
+
+export async function getPOSRateCipherConfig(
+  fyo: Fyo,
+  posProfileName?: string
+): Promise<{
+  encodeIncomingRate: boolean;
+  rateCipherWord: string;
+}> {
+  const profileName =
+    posProfileName || (fyo.singles.POSSettings?.posProfile as string);
+  let profile: POSProfile | null = null;
+  if (profileName) {
+    try {
+      profile = (await fyo.doc.getDoc(
+        ModelNameEnum.POSProfile,
+        profileName
+      )) as POSProfile;
+    } catch {
+      profile = null;
+    }
+  }
+
+  const encodeIncomingRate = Boolean(
+    profile?.encodeIncomingRate || fyo.singles.POSSettings?.encodeIncomingRate
+  );
+
+  const rawWord =
+    profile?.rateCipherWord ||
+    fyo.singles.POSSettings?.rateCipherWord ||
+    'BLACKHORSE';
+  const rateCipherWord = rawWord.trim().toUpperCase();
+
+  return { encodeIncomingRate, rateCipherWord };
 }

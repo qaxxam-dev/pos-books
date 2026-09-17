@@ -103,6 +103,30 @@
       "default": false
     },
     {
+      "fieldname": "encodeIncomingRate",
+      "label": "Encode Incoming Rate",
+      "fieldtype": "Check",
+      "default": false,
+      "section": "Default"
+    },
+    {
+      "fieldname": "rateCipherWord",
+      "label": "Cipher Keyword",
+      "fieldtype": "Data",
+      "default": "BLACKHORSE",
+      "placeholder": "e.g. BLACKHORSE",
+      "description": "10 unique letters for digits 1-9 and 0 (e.g. BLACKHORSE)",
+      "section": "Default"
+    },
+    {
+      "fieldname": "rateCipherMap",
+      "label": "Cipher Digit Mapping",
+      "fieldtype": "Data",
+      "readOnly": true,
+      "default": "1:B  2:L  3:A  4:C  5:K  6:H  7:O  8:R  9:S  0:E",
+      "section": "Default"
+    },
+    {
       "fieldname": "saveButtonColour",
       "label": "Save Button Colour",
       "placeholder": "Select Colour",

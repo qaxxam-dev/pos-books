@@ -5,6 +5,9 @@ import {
   AccountTypeEnum,
 } from 'models/baseModels/Account/types';
 
+import { ValidationError } from 'fyo/utils/errors';
+import { validateCipherWord, getCipherMapString } from 'src/utils/cipher';
+
 export class POSSettings extends Doc {
   isShiftOpen?: boolean;
   inventory?: string;
@@ -21,6 +24,22 @@ export class POSSettings extends Doc {
   canChangeRate?: boolean;
   canEditDiscount?: boolean;
   ignorePricingRule?: boolean;
+  encodeIncomingRate?: boolean;
+  rateCipherWord?: string;
+  rateCipherMap?: string;
+
+  override async validate(): Promise<void> {
+    await super.validate();
+    const word = (this.rateCipherWord || 'BLACKHORSE').trim().toUpperCase();
+    if (this.encodeIncomingRate) {
+      const { valid, error } = validateCipherWord(word);
+      if (!valid) {
+        throw new ValidationError(error!);
+      }
+    }
+    this.rateCipherWord = word;
+    this.rateCipherMap = getCipherMapString(word);
+  }
 
   static filters: FiltersMap = {
     cashAccount: () => ({
@@ -51,5 +70,7 @@ export class POSSettings extends Doc {
       !!this.fyo.singles.AccountingSettings?.enableERPNextSync,
     itemVisibilityERP: () =>
       !this.fyo.singles.AccountingSettings?.enableERPNextSync,
+    rateCipherWord: () => !this.encodeIncomingRate,
+    rateCipherMap: () => !this.encodeIncomingRate,
   };
 }
