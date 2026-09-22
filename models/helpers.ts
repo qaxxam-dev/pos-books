@@ -40,6 +40,7 @@ import { safeParseFloat } from 'utils/index';
 import { PriceList } from './baseModels/PriceList/PriceList';
 import { InvoiceItem } from './baseModels/InvoiceItem/InvoiceItem';
 import { SalesInvoiceItem } from './baseModels/SalesInvoiceItem/SalesInvoiceItem';
+import { POSProfile } from './baseModels/POSProfile/PosProfile';
 import { ItemQtyMap, ItemVisibility, POSItem } from 'src/components/POS/types';
 import { ValuationMethod } from './inventory/types';
 import {
@@ -1777,3 +1778,35 @@ export async function isLoyaltyProgramExpiredAndMaxed(
   const result = isExpired || isMaxed;
   return result;
 }
+
+export function isPOSTaxInclusive(
+  fyo: Fyo,
+  posProfile?: POSProfile | null
+): boolean {
+  if (posProfile && typeof posProfile.taxInclusive === 'boolean') {
+    return posProfile.taxInclusive;
+  }
+  return Boolean(fyo.singles.POSSettings?.taxInclusive);
+}
+
+export function getItemDisplayAmount(
+  item: SalesInvoiceItem,
+  isTaxInclusive: boolean,
+  fyo: Fyo
+): Money {
+  if (!isTaxInclusive) {
+    return (item.amount as Money) ?? fyo.pesa(0);
+  }
+  const rate = (item.rate as Money) ?? fyo.pesa(0);
+  const qty = (item.quantity as number) ?? 0;
+  let gross = rate.mul(qty);
+  if (item.setItemDiscountAmount) {
+    if (!item.itemDiscountAmount?.isZero()) {
+      gross = gross.sub((item.itemDiscountAmount as Money).mul(qty));
+    }
+  } else if (item.itemDiscountPercent && (item.itemDiscountPercent as number) > 0) {
+    gross = gross.sub(gross.percent(item.itemDiscountPercent as number));
+  }
+  return gross;
+}
+

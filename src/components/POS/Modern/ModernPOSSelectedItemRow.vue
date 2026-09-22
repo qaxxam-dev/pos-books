@@ -61,7 +61,7 @@
     }"
     size="small"
     :border="false"
-    :value="row.amount"
+    :value="displayAmount"
     :read-only="true"
   />
 
@@ -285,7 +285,7 @@ import { fyo } from 'src/initFyo';
 import { defineComponent, PropType } from 'vue';
 import { SalesInvoiceItem } from 'models/baseModels/SalesInvoiceItem/SalesInvoiceItem';
 import { Money } from 'pesa';
-import { validateSerialNumberCount, getPOSRateCipherConfig } from 'src/utils/pos';
+import { validateSerialNumberCount, getPOSRateCipherConfig, getItemDisplayAmount } from 'src/utils/pos';
 import { encodeNumberToCipher } from 'src/utils/cipher';
 
 export default defineComponent({
@@ -313,6 +313,7 @@ export default defineComponent({
       itemSerialNumbers: inject('itemSerialNumbers') as {
         [item: string]: string;
       },
+      isTaxInclusive: inject('isTaxInclusive', false),
     };
   },
   data() {
@@ -387,6 +388,14 @@ export default defineComponent({
     },
     hasSerialNumber(): boolean {
       return !!(this.row.links?.item && this.row.links?.item.hasSerialNumber);
+    },
+    displayAmount(): Money {
+      const isInclusive = Boolean(
+        (typeof this.isTaxInclusive === 'object' && this.isTaxInclusive !== null && 'value' in (this.isTaxInclusive as any)
+          ? (this.isTaxInclusive as any).value
+          : this.isTaxInclusive) ?? this.row.parentdoc?.taxInclusive
+      );
+      return getItemDisplayAmount(this.row, isInclusive, this.fyo);
     },
     isReadOnly() {
       return this.row.isFreeItem;

@@ -170,6 +170,7 @@ import {
   getTotalQuantity,
   getTotalTaxedAmount,
   validateIsPosSettingsSet,
+  isPOSTaxInclusive,
 } from 'src/utils/pos';
 import {
   validateQty,
@@ -219,6 +220,7 @@ export default defineComponent({
       isDiscountingEnabled: computed(() => this.isDiscountingEnabled),
       transferClearanceDate: computed(() => this.transferClearanceDate),
       posSettings: computed(() => fyo.singles.POSSettings),
+      isTaxInclusive: computed(() => this.isTaxInclusive()),
     };
   },
   setup() {
@@ -818,11 +820,15 @@ export default defineComponent({
     async setItemQtyMap() {
       this.itemQtyMap = await getItemQtyMap(this.sinvDoc as SalesInvoice);
     },
+    isTaxInclusive(): boolean {
+      return isPOSTaxInclusive(this.fyo, this.posProfile as POSProfile);
+    },
     setSinvDoc() {
       this.sinvDoc = this.fyo.doc.getNewDoc(ModelNameEnum.SalesInvoice, {
         account: this.fyo.singles.POSSettings?.defaultAccount,
-        party: this.sinvDoc.party ?? this.defaultCustomer,
+        party: this.sinvDoc?.party ?? this.defaultCustomer,
         isPOS: true,
+        taxInclusive: this.isTaxInclusive(),
       }) as SalesInvoice;
     },
     setCouponCodeDoc() {

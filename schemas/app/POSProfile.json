@@ -103,6 +103,13 @@
       "default": false
     },
     {
+      "fieldname": "taxInclusive",
+      "label": "Rate Includes Tax",
+      "fieldtype": "Check",
+      "section": "Default",
+      "default": false
+    },
+    {
       "fieldname": "encodeIncomingRate",
       "label": "Encode Incoming Rate",
       "fieldtype": "Check",

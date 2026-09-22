@@ -24,6 +24,7 @@ export class POSSettings extends Doc {
   canChangeRate?: boolean;
   canEditDiscount?: boolean;
   ignorePricingRule?: boolean;
+  taxInclusive?: boolean;
   encodeIncomingRate?: boolean;
   rateCipherWord?: string;
   rateCipherMap?: string;

@@ -392,8 +392,21 @@ export abstract class InvoiceItem extends Doc {
       dependsOn: ['item'],
     },
     amount: {
-      formula: () => (this.rate as Money).mul(this.quantity as number),
-      dependsOn: ['item', 'rate', 'quantity'],
+      formula: async () => {
+        const rate = this.rate ?? this.fyo.pesa(0);
+        const quantity = this.quantity ?? 1;
+        const grossAmount = (rate as Money).mul(quantity as number);
+
+        if (this.parentdoc?.taxInclusive) {
+          const totalTaxRate = await this.getTotalTaxRate();
+          if (totalTaxRate > 0) {
+            return grossAmount.div(1 + totalTaxRate / 100);
+          }
+        }
+
+        return grossAmount;
+      },
+      dependsOn: ['item', 'rate', 'quantity', 'tax'],
     },
     hsnCode: {
       formula: async () =>

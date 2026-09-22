@@ -112,6 +112,13 @@
       "hidden": true
     },
     {
+      "fieldname": "taxInclusive",
+      "fieldtype": "Check",
+      "default": false,
+      "hidden": true,
+      "readOnly": true
+    },
+    {
       "fieldname": "isPricingRuleApplied",
       "fieldtype": "Check",
       "default": false,

@@ -112,6 +112,7 @@ export abstract class Invoice extends Transactional {
   isFullyReturned?: boolean;
 
   pricingRuleDetail?: PricingRuleDetail[];
+  taxInclusive?: boolean;
 
   get isSales() {
     return (
@@ -592,11 +593,20 @@ export abstract class Invoice extends Transactional {
 
     let discountAmount = this.fyo.pesa(0);
     if (item.setItemDiscountAmount) {
-      discountAmount = discountAmount.add(
-        (item.itemDiscountAmount ?? this.fyo.pesa(0)).mul(
-          item.quantity as number
-        )
+      let disc = (item.itemDiscountAmount ?? this.fyo.pesa(0)).mul(
+        item.quantity as number
       );
+      if (this.taxInclusive && item.tax && this._taxes[item.tax]) {
+        const tax = this._taxes[item.tax];
+        const totalTaxRate = ((tax?.details ?? []) as TaxDetail[]).reduce(
+          (acc, d) => acc + (d.rate || 0),
+          0
+        );
+        if (totalTaxRate > 0) {
+          disc = disc.div(1 + totalTaxRate / 100);
+        }
+      }
+      discountAmount = discountAmount.add(disc);
     } else if (!this.discountAfterTax) {
       if (this.isReturn) {
         discountAmount = discountAmount.add(
@@ -645,11 +655,20 @@ export abstract class Invoice extends Transactional {
     let discountAmount = this.fyo.pesa(0);
     for (const item of this.items) {
       if (item.setItemDiscountAmount) {
-        discountAmount = discountAmount.add(
-          (item.itemDiscountAmount ?? this.fyo.pesa(0)).mul(
-            item.quantity as number
-          )
+        let disc = (item.itemDiscountAmount ?? this.fyo.pesa(0)).mul(
+          item.quantity as number
         );
+        if (this.taxInclusive && item.tax && this._taxes[item.tax]) {
+          const tax = this._taxes[item.tax];
+          const totalTaxRate = ((tax?.details ?? []) as TaxDetail[]).reduce(
+            (acc, d) => acc + (d.rate || 0),
+            0
+          );
+          if (totalTaxRate > 0) {
+            disc = disc.div(1 + totalTaxRate / 100);
+          }
+        }
+        discountAmount = discountAmount.add(disc);
       } else if (!this.discountAfterTax) {
         if (this.isReturn) {
           discountAmount = discountAmount.add(
