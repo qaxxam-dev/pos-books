@@ -39,13 +39,19 @@
       </h3>
       <p class="mt-4 text-black leading-relaxed text-lg">{{ doc.party }}</p>
       <p
-        v-if="doc.links.party.address"
+        v-if="doc.links?.party?.address"
         class="mt-2 text-black leading-relaxed text-lg"
       >
         {{ doc.links.party.links.address.addressDisplay ?? '' }}
       </p>
       <p
-        v-if="doc.links.party.gstin"
+        v-if="doc.partyPhone || doc.links?.party?.phone"
+        class="mt-2 text-black leading-relaxed text-lg"
+      >
+        {{ t`Phone` }}: {{ doc.partyPhone || doc.links?.party?.phone }}
+      </p>
+      <p
+        v-if="doc.links?.party?.gstin"
         class="mt-2 text-black leading-relaxed text-lg"
       >
         GSTIN: {{ doc.links.party.gstin }}

@@ -21,18 +21,23 @@
     <h4 class="font-semibold text-xl">Invoice</h4>
   </section>
 
-  <div class="w-auto text-xs grid grid-cols-7 grid-rows-3 p-2">
+  <div class="w-auto text-xs grid grid-cols-7 p-2 gap-y-0.5">
     <div class="col-span-2 font-bold">
       <p>Invoice No</p>
     </div>
     <div class="col-start-3">:</div>
     <div class="col-span-4 col-start-4">{{ doc.name }}</div>
-    <div class="col-span-2 row-start-2 font-bold">Customer</div>
-    <div class="col-start-3 row-start-2">:</div>
-    <div class="col-span-4 col-start-4 row-start-2">{{ doc.party }}</div>
-    <div class="col-span-2 col-start-1 row-start-3 font-bold">Date</div>
-    <div class="col-span-2 col-start-3 row-start-3">:</div>
-    <div class="col-span-4 col-start-4 row-start-3">{{doc.date}}</div>
+    <div class="col-span-2 font-bold">Customer</div>
+    <div class="col-start-3">:</div>
+    <div class="col-span-4 col-start-4">{{ doc.party }}</div>
+    <template v-if="doc.partyPhone || doc.links?.party?.phone">
+      <div class="col-span-2 font-bold">Phone</div>
+      <div class="col-start-3">:</div>
+      <div class="col-span-4 col-start-4">{{ doc.partyPhone || doc.links?.party?.phone }}</div>
+    </template>
+    <div class="col-span-2 font-bold">Date</div>
+    <div class="col-start-3">:</div>
+    <div class="col-span-4 col-start-4">{{ doc.date }}</div>
   </div>
 
   <!-- Items Table -->

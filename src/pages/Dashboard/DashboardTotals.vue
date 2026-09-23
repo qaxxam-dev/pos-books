@@ -150,36 +150,98 @@
       </div>
     </div>
 
-    <!-- Payment Methods -->
-    <div
-      v-if="paymentMethodTotals.length"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4"
-    >
+    <!-- Cash & Bank Accounts -->
+    <div class="mt-6">
+      <SectionHeader>
+        <template #title>{{ t`Cash & Bank Accounts` }}</template>
+      </SectionHeader>
+
       <div
-        v-for="item in paymentMethodTotals"
-        :key="item.name"
-        class="
-          bg-white
-          dark:bg-gray-850
-          p-4
-          rounded-lg
-          shadow-sm
-          border border-gray-100
-          dark:border-gray-800
-          flex
-          items-center
-        "
+        v-if="accountBalanceCards.length"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4"
       >
-        <div class="p-3 rounded-full mr-4" :class="item.iconBgClass">
-          <feather-icon :name="item.icon" class="w-6 h-6" />
-        </div>
-        <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-            {{ item.name }}
-          </p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">
-            {{ fyo.format(item.amount, 'Currency') }}
-          </p>
+        <div
+          v-for="item in accountBalanceCards"
+          :key="item.name"
+          class="
+            bg-white
+            dark:bg-gray-850
+            p-4
+            rounded-lg
+            shadow-sm
+            border border-gray-100
+            dark:border-gray-800
+            flex flex-col
+            justify-between
+          "
+        >
+          <div class="flex items-center">
+            <div
+              class="p-3 rounded-full mr-4 flex-shrink-0"
+              :class="item.iconBgClass"
+            >
+              <feather-icon :name="item.icon" class="w-6 h-6" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p
+                  class="
+                    text-sm text-gray-500
+                    dark:text-gray-400
+                    font-medium
+                    truncate
+                  "
+                >
+                  {{ item.name }}
+                </p>
+                <span
+                  v-if="item.badge"
+                  class="text-xs px-2 py-0.5 rounded-full font-semibold"
+                  :class="item.badgeClass"
+                >
+                  {{ item.badge }}
+                </span>
+              </div>
+              <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ fyo.format(item.balance, 'Currency') }}
+              </p>
+            </div>
+          </div>
+
+          <div
+            v-if="item.connectedMethods && item.connectedMethods.length"
+            class="
+              mt-3
+              pt-2
+              border-t border-gray-100
+              dark:border-gray-800
+              flex flex-wrap
+              gap-1.5
+              items-center
+            "
+          >
+            <span class="text-xs text-gray-400 dark:text-gray-500 mr-1">{{
+              t`Includes:`
+            }}</span>
+            <span
+              v-for="method in item.connectedMethods"
+              :key="method"
+              class="
+                text-xs
+                px-2
+                py-0.5
+                rounded
+                font-semibold
+                bg-gray-100
+                text-gray-700
+                dark:bg-gray-800 dark:text-gray-200
+                border border-gray-200
+                dark:border-gray-700
+              "
+            >
+              {{ method }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -196,20 +258,14 @@ import { t } from 'fyo';
 import { PeriodKey } from 'src/utils/types';
 import { DateTime } from 'luxon';
 
-interface PaymentMethodCard {
+interface AccountBalanceCard {
   name: string;
-  amount: number;
+  badge?: string;
+  badgeClass?: string;
+  balance: number;
   icon: string;
   iconBgClass: string;
-}
-
-interface RawPaymentItem {
-  name: string;
-  paymentMethod?: string;
-  paymentType?: string;
-  amount?: unknown;
-  referenceType?: string;
-  date?: string | Date;
+  connectedMethods: string[];
 }
 
 export default defineComponent({
@@ -240,7 +296,8 @@ export default defineComponent({
       purchase: 0,
       expense: 0,
       profit: 0,
-      paymentMethodTotals: [] as PaymentMethodCard[],
+      accountBalanceCards: [] as AccountBalanceCard[],
+      ledgerSyncHandler: null as null | (() => void),
     };
   },
   computed: {
@@ -267,9 +324,27 @@ export default defineComponent({
   },
   async mounted() {
     await this.setData();
+    await this.setAccountBalances();
+    this.ledgerSyncHandler = () => {
+      void this.setAccountBalances();
+    };
+    fyo.doc.observer.on('sync:AccountingLedgerEntry', this.ledgerSyncHandler);
+    fyo.doc.observer.on('sync:Payment', this.ledgerSyncHandler);
+    fyo.doc.observer.on('sync:PaymentMethod', this.ledgerSyncHandler);
   },
   async activated() {
     await this.setData();
+    await this.setAccountBalances();
+  },
+  unmounted() {
+    if (this.ledgerSyncHandler) {
+      fyo.doc.observer.off(
+        'sync:AccountingLedgerEntry',
+        this.ledgerSyncHandler
+      );
+      fyo.doc.observer.off('sync:Payment', this.ledgerSyncHandler);
+      fyo.doc.observer.off('sync:PaymentMethod', this.ledgerSyncHandler);
+    }
   },
   methods: {
     t(strings: unknown, ...values: unknown[]) {
@@ -411,77 +486,159 @@ export default defineComponent({
 
       this.profit = totalIncome - this.expense - cogs;
 
-      // Get Payment Method Totals
+      await this.setAccountBalances();
+    },
+    async setAccountBalances() {
       try {
+        const accounts = (await fyo.db.getAll(ModelNameEnum.Account, {
+          fields: ['name', 'accountType', 'rootType', 'isGroup'],
+          filters: {
+            isGroup: false,
+          },
+        })) as Array<{
+          name: string;
+          accountType: string;
+          rootType: string;
+          isGroup: boolean;
+        }>;
+
+        const ledgerTotals = await fyo.db.getTotalCreditAndDebit();
+        const totalMap: Record<
+          string,
+          { totalCredit: number; totalDebit: number }
+        > = {};
+        for (const entry of (ledgerTotals || []) as Array<{
+          account: string;
+          totalCredit: number;
+          totalDebit: number;
+        }>) {
+          totalMap[entry.account] = {
+            totalCredit: Number(entry.totalCredit) || 0,
+            totalDebit: Number(entry.totalDebit) || 0,
+          };
+        }
+
         const paymentMethods = (await fyo.db.getAll(
           ModelNameEnum.PaymentMethod,
           {
-            fields: ['name', 'type'],
+            fields: ['name', 'type', 'account'],
           }
-        )) as Array<{ name: string; type?: string }>;
+        )) as Array<{ name: string; type?: string; account?: string }>;
 
-        const payments = (await fyo.db.getAll(ModelNameEnum.Payment, {
-          fields: [
-            'name',
-            'paymentMethod',
-            'paymentType',
-            'amount',
-            'referenceType',
-            'date',
-            'submitted',
-            'cancelled',
-          ],
-          filters: {
-            submitted: true,
-            cancelled: false,
-          },
-        })) as RawPaymentItem[];
-
-        const fromMillis = fromDate.startOf('day').toMillis();
-        const toMillis = toDate.endOf('day').toMillis();
-
-        const methodMap: Record<string, { type?: string; amount: number }> = {};
+        const accountMethodsMap: Record<string, string[]> = {};
         for (const pm of paymentMethods) {
-          if (pm.name) {
-            methodMap[pm.name] = { type: pm.type, amount: 0 };
+          if (pm.account && pm.name) {
+            accountMethodsMap[pm.account] = accountMethodsMap[pm.account] || [];
+            if (!accountMethodsMap[pm.account].includes(pm.name)) {
+              accountMethodsMap[pm.account].push(pm.name);
+            }
           }
         }
 
-        for (const p of payments) {
-          if (!p.paymentMethod) continue;
-          const pMillis = this.parseDateToMillis(p.date);
-          if (pMillis === null) continue;
-          if (pMillis < fromMillis || pMillis > toMillis) continue;
+        const configuredCashAccount =
+          fyo.singles.POSSettings?.cashAccount || 'Cash In Hand';
 
-          const numAmount = this.parseMoneyToFloat(p.amount);
+        const cards: AccountBalanceCard[] = [];
 
-          if (!methodMap[p.paymentMethod]) {
-            methodMap[p.paymentMethod] = { amount: 0 };
-          }
-
-          if (p.paymentType === 'Receive') {
-            methodMap[p.paymentMethod].amount += numAmount;
-          } else if (
-            p.paymentType === 'Pay' &&
-            p.referenceType === ModelNameEnum.SalesInvoice
-          ) {
-            methodMap[p.paymentMethod].amount -= numAmount;
-          }
-        }
-
-        this.paymentMethodTotals = Object.entries(methodMap).map(
-          ([name, val]) => {
-            const style = this.getPaymentMethodStyle(name, val.type);
-            return {
-              name,
-              amount: val.amount,
-              icon: style.icon,
-              iconBgClass: style.iconBgClass,
-            };
-          }
+        // Cash Accounts
+        let cashAccounts = accounts.filter(
+          (acc) =>
+            acc.accountType === 'Cash' || acc.name === configuredCashAccount
         );
+
+        if (cashAccounts.length === 0 && configuredCashAccount) {
+          cashAccounts = [
+            {
+              name: configuredCashAccount,
+              accountType: 'Cash',
+              rootType: 'Asset',
+              isGroup: false,
+            },
+          ];
+        }
+
+        for (const cashAcc of cashAccounts) {
+          const tot = totalMap[cashAcc.name] || {
+            totalCredit: 0,
+            totalDebit: 0,
+          };
+          const bal = tot.totalDebit - tot.totalCredit;
+          const isDrawer =
+            cashAcc.name === configuredCashAccount ||
+            cashAcc.name.toLowerCase().includes('cash in hand') ||
+            cashAccounts.length === 1;
+
+          const connected = accountMethodsMap[cashAcc.name]
+            ? [...accountMethodsMap[cashAcc.name]]
+            : [];
+          if (connected.length === 0) {
+            const cashMethods = paymentMethods
+              .filter(
+                (pm) =>
+                  pm.type === 'Cash' || pm.name.toLowerCase().includes('cash')
+              )
+              .map((pm) => pm.name);
+            connected.push(...cashMethods);
+          }
+
+          cards.push({
+            name: isDrawer ? t`Cash in Hand` : cashAcc.name,
+            badge: isDrawer ? t`Cash Drawer` : undefined,
+            badgeClass:
+              'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+            balance: bal,
+            icon: 'dollar-sign',
+            iconBgClass:
+              'bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300',
+            connectedMethods: Array.from(new Set(connected)),
+          });
+        }
+
+        // Bank Accounts
+        const bankAccounts = accounts.filter(
+          (acc) => acc.accountType === 'Bank'
+        );
+        for (const bankAcc of bankAccounts) {
+          const tot = totalMap[bankAcc.name] || {
+            totalCredit: 0,
+            totalDebit: 0,
+          };
+          const bal = tot.totalDebit - tot.totalCredit;
+
+          let connected = accountMethodsMap[bankAcc.name]
+            ? [...accountMethodsMap[bankAcc.name]]
+            : [];
+          if (connected.length === 0 && bankAccounts.length === 1) {
+            const unassigned = paymentMethods
+              .filter(
+                (pm) =>
+                  !pm.account &&
+                  (pm.type === 'Bank' ||
+                    pm.type === 'Transfer' ||
+                    pm.name.toLowerCase().includes('upi') ||
+                    pm.name.toLowerCase().includes('transfer') ||
+                    pm.name.toLowerCase().includes('bank'))
+              )
+              .map((pm) => pm.name);
+            connected = unassigned;
+          }
+
+          cards.push({
+            name: bankAcc.name,
+            badge: t`Bank`,
+            badgeClass:
+              'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+            balance: bal,
+            icon: 'home',
+            iconBgClass:
+              'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300',
+            connectedMethods: Array.from(new Set(connected)),
+          });
+        }
+
+        this.accountBalanceCards = cards;
       } catch {
-        this.paymentMethodTotals = [];
+        this.accountBalanceCards = [];
       }
     },
   },

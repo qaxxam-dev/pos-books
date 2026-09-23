@@ -78,7 +78,8 @@ export async function getPrintTemplatePropValues(
         totalWriteOffPesa,
         ModelNameEnum.Currency
       );
-      (values.doc as PrintTemplateData).hasWriteOff = !totalWriteOffPesa.isZero();
+      (values.doc as PrintTemplateData).hasWriteOff =
+        !totalWriteOffPesa.isZero();
     }
   }
 
@@ -146,9 +147,24 @@ export async function getPrintTemplatePropValues(
     (values.doc as PrintTemplateData).time = getTime(doc.date as string);
   }
 
-  if (printSettings.displayDescription) {
-    (values.doc as PrintTemplateData).description = showDescription(doc);
+  let partyPhone = '';
+  if (doc.links?.party) {
+    partyPhone =
+      (doc.links.party.phone as string) ||
+      (doc.links.party.mobile as string) ||
+      '';
+  } else if (doc.party) {
+    try {
+      const targetModel =
+        doc.referenceType === 'Lead' ? ModelNameEnum.Lead : ModelNameEnum.Party;
+      const partyDoc = await fyo.doc.getDoc(targetModel, doc.party as string);
+      partyPhone =
+        (partyDoc?.phone as string) || (partyDoc?.mobile as string) || '';
+    } catch {
+      partyPhone = '';
+    }
   }
+  (values.doc as PrintTemplateData).partyPhone = partyPhone;
 
   return values;
 }
@@ -220,6 +236,7 @@ export function getPrintTemplatePropHints(schemaName: string, fyo: Fyo) {
     (hints.doc as PrintTemplateData).totalDiscount = fyo.t`Total Discount`;
     (hints.doc as PrintTemplateData).showHSN = fyo.t`Show HSN`;
   }
+  (hints.doc as PrintTemplateData).partyPhone = fyo.t`Party Phone`;
 
   return hints;
 }
