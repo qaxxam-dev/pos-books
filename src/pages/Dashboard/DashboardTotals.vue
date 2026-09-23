@@ -298,6 +298,8 @@ export default defineComponent({
       profit: 0,
       accountBalanceCards: [] as AccountBalanceCard[],
       ledgerSyncHandler: null as null | (() => void),
+      syncDebounceTimer: null as null | ReturnType<typeof setTimeout>,
+      observedEvents: [] as string[],
     };
   },
   computed: {
@@ -324,26 +326,48 @@ export default defineComponent({
   },
   async mounted() {
     await this.setData();
-    await this.setAccountBalances();
     this.ledgerSyncHandler = () => {
-      void this.setAccountBalances();
+      if (this.syncDebounceTimer) {
+        clearTimeout(this.syncDebounceTimer);
+      }
+      this.syncDebounceTimer = setTimeout(() => {
+        void this.setData();
+      }, 100);
     };
-    fyo.doc.observer.on('sync:AccountingLedgerEntry', this.ledgerSyncHandler);
-    fyo.doc.observer.on('sync:Payment', this.ledgerSyncHandler);
-    fyo.doc.observer.on('sync:PaymentMethod', this.ledgerSyncHandler);
+
+    this.observedEvents = [
+      'sync:AccountingLedgerEntry',
+      'sync:Payment',
+      'submit:Payment',
+      'cancel:Payment',
+      'delete:Payment',
+      'sync:SalesInvoice',
+      'submit:SalesInvoice',
+      'cancel:SalesInvoice',
+      'delete:SalesInvoice',
+      'sync:JournalEntry',
+      'submit:JournalEntry',
+      'cancel:JournalEntry',
+      'delete:JournalEntry',
+      'sync:PaymentMethod',
+    ];
+
+    for (const ev of this.observedEvents) {
+      fyo.doc.observer.on(ev, this.ledgerSyncHandler);
+    }
   },
   async activated() {
     await this.setData();
-    await this.setAccountBalances();
   },
   unmounted() {
+    if (this.syncDebounceTimer) {
+      clearTimeout(this.syncDebounceTimer);
+      this.syncDebounceTimer = null;
+    }
     if (this.ledgerSyncHandler) {
-      fyo.doc.observer.off(
-        'sync:AccountingLedgerEntry',
-        this.ledgerSyncHandler
-      );
-      fyo.doc.observer.off('sync:Payment', this.ledgerSyncHandler);
-      fyo.doc.observer.off('sync:PaymentMethod', this.ledgerSyncHandler);
+      for (const ev of this.observedEvents) {
+        fyo.doc.observer.off(ev, this.ledgerSyncHandler);
+      }
     }
   },
   methods: {
@@ -492,9 +516,6 @@ export default defineComponent({
       try {
         const accounts = (await fyo.db.getAll(ModelNameEnum.Account, {
           fields: ['name', 'accountType', 'rootType', 'isGroup'],
-          filters: {
-            isGroup: false,
-          },
         })) as Array<{
           name: string;
           accountType: string;
@@ -541,21 +562,30 @@ export default defineComponent({
         const cards: AccountBalanceCard[] = [];
 
         // Cash Accounts
-        let cashAccounts = accounts.filter(
+        // 1. Primary Drawer Account (configured on POS, defaults to 'Cash In Hand')
+        const drawerAccount = accounts.find(
+          (acc) => acc.name === configuredCashAccount
+        ) || {
+          name: configuredCashAccount,
+          accountType: 'Cash',
+          rootType: 'Asset',
+          isGroup: false,
+        };
+
+        // 2. Secondary Cash Accounts: distinct other cash accounts (excluding redundant/duplicate "Cash" or "Cash in Hand" sub-accounts)
+        const otherCashAccounts = accounts.filter(
           (acc) =>
-            acc.accountType === 'Cash' || acc.name === configuredCashAccount
+            acc.name !== configuredCashAccount &&
+            acc.name.toLowerCase() !== 'cash' &&
+            acc.name.toLowerCase() !== 'cash in hand' &&
+            acc.accountType === 'Cash' &&
+            (!acc.isGroup ||
+              (totalMap[acc.name] &&
+                (totalMap[acc.name].totalCredit !== 0 ||
+                  totalMap[acc.name].totalDebit !== 0)))
         );
 
-        if (cashAccounts.length === 0 && configuredCashAccount) {
-          cashAccounts = [
-            {
-              name: configuredCashAccount,
-              accountType: 'Cash',
-              rootType: 'Asset',
-              isGroup: false,
-            },
-          ];
-        }
+        const cashAccounts = [drawerAccount, ...otherCashAccounts];
 
         for (const cashAcc of cashAccounts) {
           const tot = totalMap[cashAcc.name] || {
@@ -565,13 +595,12 @@ export default defineComponent({
           const bal = tot.totalDebit - tot.totalCredit;
           const isDrawer =
             cashAcc.name === configuredCashAccount ||
-            cashAcc.name.toLowerCase().includes('cash in hand') ||
-            cashAccounts.length === 1;
+            cashAcc.name.toLowerCase().includes('cash in hand');
 
           const connected = accountMethodsMap[cashAcc.name]
             ? [...accountMethodsMap[cashAcc.name]]
             : [];
-          if (connected.length === 0) {
+          if (connected.length === 0 && isDrawer) {
             const cashMethods = paymentMethods
               .filter(
                 (pm) =>
@@ -594,9 +623,14 @@ export default defineComponent({
           });
         }
 
-        // Bank Accounts
+        // Bank Accounts: exclude empty group folders like 'Bank Accounts'
         const bankAccounts = accounts.filter(
-          (acc) => acc.accountType === 'Bank'
+          (acc) =>
+            acc.accountType === 'Bank' &&
+            (!acc.isGroup ||
+              (totalMap[acc.name] &&
+                (totalMap[acc.name].totalCredit !== 0 ||
+                  totalMap[acc.name].totalDebit !== 0)))
         );
         for (const bankAcc of bankAccounts) {
           const tot = totalMap[bankAcc.name] || {
