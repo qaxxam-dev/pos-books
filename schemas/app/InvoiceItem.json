@@ -141,6 +141,12 @@
       "placeholder": "HSN/SAC Code"
     },
     {
+      "fieldname": "imei",
+      "label": "IMEI",
+      "fieldtype": "Data",
+      "placeholder": "IMEI"
+    },
+    {
       "fieldname": "stockNotTransferred",
       "label": "Stock Not Transferred",
       "fieldtype": "Float",
@@ -154,6 +160,7 @@
     "account",
     "description",
     "hsnCode",
+    "imei",
     "tax",
     "rate",
 

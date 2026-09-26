@@ -77,7 +77,12 @@
       v-for="row in doc.items"
       :key="row.name"
     >
-      <div class="w-3/12">{{ row.item }}</div>
+      <div class="w-3/12">
+        <div>{{ row.item }}</div>
+        <div v-if="row.imei || row.links?.item?.imei" class="text-xs text-gray-500">
+          {{ t`IMEI` }}: {{ row.imei || row.links?.item?.imei }}
+        </div>
+      </div>
       <div class="w-3/12" v-if="doc.description">{{ row.description }}</div>
       <div class="w-3/12 text-right" v-if="doc.showHSN">{{ row.hsnCode }}</div>
       <div class="w-3/12 text-right">

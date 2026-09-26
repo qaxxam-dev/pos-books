@@ -116,7 +116,12 @@
 
     <!-- Body Rows -->
     <section class="flex py-1 text-lg" v-for="row in doc.items" :key="row.name">
-      <div class="w-3/12 text-left">{{ row.item }}</div>
+      <div class="w-3/12 text-left">
+        <div>{{ row.item }}</div>
+        <div v-if="row.imei || row.links?.item?.imei" class="text-xs text-gray-500">
+          {{ t`IMEI` }}: {{ row.imei || row.links?.item?.imei }}
+        </div>
+      </div>
       <div class="w-3/12 text-left" v-if="doc.description">
         {{ row.description }}
       </div>

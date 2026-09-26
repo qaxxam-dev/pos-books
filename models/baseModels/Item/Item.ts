@@ -22,6 +22,7 @@ interface UOMConversionItem {
 
 export class Item extends Doc {
   itemCode?: string;
+  imei?: string;
   trackItem?: boolean;
   itemType?: 'Product' | 'Service';
   for?: 'Purchases' | 'Sales' | 'Both';
@@ -109,6 +110,10 @@ export class Item extends Doc {
         this.batchSeries = series + '-';
       }
     }
+
+    if (this.imei !== undefined && this.imei !== null && this.imei !== '') {
+      this.imei = String(this.imei).trim();
+    }
   }
 
   async afterSync(): Promise<void> {
@@ -170,7 +175,19 @@ export class Item extends Doc {
     }),
   };
 
-  validations: ValidationMap = {};
+  validations: ValidationMap = {
+    imei: (value: DocValue) => {
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
+      const str = String(value).trim();
+      if (!/^\d+$/.test(str)) {
+        throw new ValidationError(
+          this.fyo.t`IMEI must contain only numbers without decimals.`
+        );
+      }
+    },
+  };
 
   static getActions(fyo: Fyo): Action[] {
     return [
@@ -212,6 +229,7 @@ export class Item extends Doc {
   }
 
   hidden: HiddenMap = {
+    imei: () => this.itemType !== 'Product',
     trackItem: () =>
       !this.fyo.singles.AccountingSettings?.enableInventory ||
       this.itemType !== 'Product' ||

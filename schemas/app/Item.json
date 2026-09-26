@@ -140,6 +140,13 @@
       "section": "Inventory"
     },
     {
+      "fieldname": "imei",
+      "label": "IMEI",
+      "fieldtype": "Data",
+      "placeholder": "IMEI",
+      "section": "Inventory"
+    },
+    {
       "fieldname": "trackItem",
       "label": "Track Inventory",
       "fieldtype": "Check",
@@ -198,6 +205,7 @@
     "incomeAccount",
     "expenseAccount",
     "barcode",
+    "imei",
     "hsnCode",
     "trackItem",
     "uom"
@@ -205,6 +213,7 @@
   "keywordFields": [
     "name",
     "itemType",
-    "for"
+    "for",
+    "imei"
   ]
 }

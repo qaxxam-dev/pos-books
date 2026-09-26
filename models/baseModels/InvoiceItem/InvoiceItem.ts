@@ -44,6 +44,7 @@ export abstract class InvoiceItem extends Doc {
 
   description?: string;
   hsnCode?: number;
+  imei?: string;
 
   unit?: string;
   transferUnit?: string;
@@ -138,6 +139,13 @@ export abstract class InvoiceItem extends Doc {
           }
         }
       }
+    }
+  }
+
+  override async beforeSync(): Promise<void> {
+    await super.beforeSync();
+    if (this.imei !== undefined && this.imei !== null && this.imei !== '') {
+      this.imei = String(this.imei).trim();
     }
   }
 
@@ -395,7 +403,7 @@ export abstract class InvoiceItem extends Doc {
       formula: async () => {
         const rate = this.rate ?? this.fyo.pesa(0);
         const quantity = this.quantity ?? 1;
-        const grossAmount = (rate as Money).mul(quantity as number);
+        const grossAmount = rate.mul(quantity);
 
         if (this.parentdoc?.taxInclusive) {
           const totalTaxRate = await this.getTotalTaxRate();
@@ -411,6 +419,15 @@ export abstract class InvoiceItem extends Doc {
     hsnCode: {
       formula: async () =>
         await this.fyo.getValue('Item', this.item as string, 'hsnCode'),
+      dependsOn: ['item'],
+    },
+    imei: {
+      formula: async () =>
+        (await this.fyo.getValue(
+          'Item',
+          this.item as string,
+          'imei'
+        )) as string,
       dependsOn: ['item'],
     },
     itemDiscountedTotal: {
@@ -601,6 +618,17 @@ export abstract class InvoiceItem extends Doc {
   };
 
   validations: ValidationMap = {
+    imei: (value: DocValue) => {
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
+      const str = String(value).trim();
+      if (!/^\d+$/.test(str)) {
+        throw new ValidationError(
+          this.fyo.t`IMEI must contain only numbers without decimals.`
+        );
+      }
+    },
     rate: (value: DocValue) => {
       if ((value as Money).gte(0)) {
         return;
