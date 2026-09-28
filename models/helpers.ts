@@ -43,6 +43,7 @@ import { SalesInvoiceItem } from './baseModels/SalesInvoiceItem/SalesInvoiceItem
 import { POSProfile } from './baseModels/POSProfile/PosProfile';
 import { ItemQtyMap, ItemVisibility, POSItem } from 'src/components/POS/types';
 import { ValuationMethod } from './inventory/types';
+import { QueryFilter } from 'utils/db/types';
 import {
   getRawStockLedgerEntries,
   getStockBalanceEntries,
@@ -1794,9 +1795,6 @@ export function getItemDisplayAmount(
   isTaxInclusive: boolean,
   fyo: Fyo
 ): Money {
-  if (!isTaxInclusive) {
-    return (item.amount as Money) ?? fyo.pesa(0);
-  }
   const rate = (item.rate as Money) ?? fyo.pesa(0);
   const qty = (item.quantity as number) ?? 0;
   let gross = rate.mul(qty);
@@ -1804,9 +1802,177 @@ export function getItemDisplayAmount(
     if (!item.itemDiscountAmount?.isZero()) {
       gross = gross.sub((item.itemDiscountAmount as Money).mul(qty));
     }
-  } else if (item.itemDiscountPercent && (item.itemDiscountPercent as number) > 0) {
-    gross = gross.sub(gross.percent(item.itemDiscountPercent as number));
+  } else if (item.itemDiscountPercent && item.itemDiscountPercent > 0) {
+    gross = gross.sub(gross.percent(item.itemDiscountPercent));
   }
+
   return gross;
 }
 
+export async function getTaxRate(
+  fyo: Fyo,
+  taxName?: string | null
+): Promise<number> {
+  if (!taxName) return 0;
+  const details = await fyo.db.getAll('TaxDetail', {
+    fields: ['rate'],
+    filters: { parent: taxName },
+  });
+  if (!details || !details.length) return 0;
+  return details.reduce(
+    (sum: number, d: Record<string, unknown>) => sum + (Number(d.rate) || 0),
+    0
+  );
+}
+
+export async function getIncomingRateWithTax(
+  fyo: Fyo,
+  itemName: string,
+  batch?: string
+): Promise<number> {
+  if (!itemName) return 0;
+
+  // 1. Look up the latest PurchaseInvoiceItem for this item (prefer matching batch if provided)
+  const piiFilters: QueryFilter = { item: itemName };
+  if (batch) {
+    piiFilters.batch = batch;
+  }
+
+  let piis = await fyo.db.getAll('PurchaseInvoiceItem', {
+    fields: [
+      'name',
+      'rate',
+      'quantity',
+      'tax',
+      'amount',
+      'setItemDiscountAmount',
+      'itemDiscountAmount',
+      'itemDiscountPercent',
+      'parent',
+    ],
+    filters: piiFilters,
+  });
+
+  // If no match with specific batch, fallback to latest without batch filter
+  if ((!piis || !piis.length) && batch) {
+    piis = await fyo.db.getAll('PurchaseInvoiceItem', {
+      fields: [
+        'name',
+        'rate',
+        'quantity',
+        'tax',
+        'amount',
+        'setItemDiscountAmount',
+        'itemDiscountAmount',
+        'itemDiscountPercent',
+        'parent',
+      ],
+      filters: { item: itemName },
+    });
+  }
+
+  if (piis && piis.length > 0) {
+    const pii = piis[piis.length - 1];
+    if (pii && pii.rate) {
+      let effectiveRate = isPesa(pii.rate)
+        ? pii.rate.copy()
+        : fyo.pesa(Number(pii.rate) || 0);
+      const qty = Number(pii.quantity) || 1;
+
+      if (pii.setItemDiscountAmount && pii.itemDiscountAmount) {
+        const discAmt = isPesa(pii.itemDiscountAmount)
+          ? pii.itemDiscountAmount.copy()
+          : fyo.pesa(Number(pii.itemDiscountAmount) || 0);
+        effectiveRate = effectiveRate.sub(discAmt.div(qty > 0 ? qty : 1));
+      } else if (
+        pii.itemDiscountPercent &&
+        Number(pii.itemDiscountPercent) > 0
+      ) {
+        effectiveRate = effectiveRate.sub(
+          effectiveRate.percent(Number(pii.itemDiscountPercent))
+        );
+      }
+
+      let taxName = pii.tax as string | undefined;
+      if (!taxName) {
+        taxName = (await fyo.getValue('Item', itemName, 'tax')) as
+          | string
+          | undefined;
+      }
+
+      const taxRate = await getTaxRate(fyo, taxName);
+      if (taxRate > 0) {
+        effectiveRate = effectiveRate.mul(1 + taxRate / 100);
+      }
+
+      return effectiveRate.float;
+    }
+  }
+
+  // 2. Look up latest inward StockLedgerEntry (prefer matching batch if provided)
+  const sleFilters: QueryFilter = { item: itemName };
+  if (batch) {
+    sleFilters.batch = batch;
+  }
+
+  let sles = await fyo.db.getAll('StockLedgerEntry', {
+    fields: ['name', 'rate', 'quantity', 'referenceType', 'referenceName'],
+    filters: sleFilters,
+    orderBy: ['date', 'created'],
+    order: 'desc',
+    limit: 10,
+  });
+
+  let inwardSle = sles?.find(
+    (s: Record<string, unknown>) => (Number(s.quantity) || 0) > 0
+  );
+
+  if (!inwardSle && batch) {
+    sles = await fyo.db.getAll('StockLedgerEntry', {
+      fields: ['name', 'rate', 'quantity', 'referenceType', 'referenceName'],
+      filters: { item: itemName },
+      orderBy: ['date', 'created'],
+      order: 'desc',
+      limit: 10,
+    });
+    inwardSle = sles?.find(
+      (s: Record<string, unknown>) => (Number(s.quantity) || 0) > 0
+    );
+  }
+
+  if (inwardSle && inwardSle.rate) {
+    let effectiveRate = isPesa(inwardSle.rate)
+      ? inwardSle.rate.copy()
+      : fyo.pesa(Number(inwardSle.rate) || 0);
+
+    let taxName: string | undefined;
+    if (
+      inwardSle.referenceType === 'PurchaseInvoice' &&
+      inwardSle.referenceName
+    ) {
+      const linkedPii = await fyo.db.getAll('PurchaseInvoiceItem', {
+        fields: ['tax'],
+        filters: { parent: String(inwardSle.referenceName), item: itemName },
+        limit: 1,
+      });
+      if (linkedPii && linkedPii.length > 0 && linkedPii[0].tax) {
+        taxName = linkedPii[0].tax as string;
+      }
+    }
+
+    if (!taxName) {
+      taxName = (await fyo.getValue('Item', itemName, 'tax')) as
+        | string
+        | undefined;
+    }
+
+    const taxRate = await getTaxRate(fyo, taxName);
+    if (taxRate > 0) {
+      effectiveRate = effectiveRate.mul(1 + taxRate / 100);
+    }
+
+    return effectiveRate.float;
+  }
+
+  return 0;
+}

@@ -337,6 +337,9 @@ export async function getPOSRateCipherConfig(
   return { encodeIncomingRate, rateCipherWord };
 }
 
-export { isPOSTaxInclusive, getItemDisplayAmount } from 'models/helpers';
-
-
+export {
+  isPOSTaxInclusive,
+  getItemDisplayAmount,
+  getTaxRate,
+  getIncomingRateWithTax,
+} from 'models/helpers';

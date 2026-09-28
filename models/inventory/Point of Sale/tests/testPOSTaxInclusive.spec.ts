@@ -2,7 +2,11 @@ import test from 'tape';
 import { closeTestFyo, getTestFyo, setupTestFyo } from 'tests/helpers';
 import { SalesInvoice } from 'models/baseModels/SalesInvoice/SalesInvoice';
 import { ModelNameEnum } from 'models/types';
-import { isPOSTaxInclusive, getItemDisplayAmount } from 'models/helpers';
+import {
+  isPOSTaxInclusive,
+  getItemDisplayAmount,
+  getIncomingRateWithTax,
+} from 'models/helpers';
 import { SalesInvoiceItem } from 'models/baseModels/SalesInvoiceItem/SalesInvoiceItem';
 import { POSProfile } from 'models/baseModels/POSProfile/PosProfile';
 
@@ -92,6 +96,18 @@ test('tax exclusive calculation (standard POS behavior when taxInclusive is fals
   t.equals(sinv.netTotal?.round(2), '100.00', 'net total is 100.00');
   t.equals(sinv.taxes?.[0].amount?.round(2), '18.00', 'tax is 18.00');
   t.equals(sinv.grandTotal?.round(2), '118.00', 'grand total is 118.00');
+
+  // Cart row display amount should show 100.00 (Rate × Qty)
+  const displayAmtExclusive = getItemDisplayAmount(
+    sinv.items?.[0] as SalesInvoiceItem,
+    false,
+    fyo
+  );
+  t.equals(
+    displayAmtExclusive.round(2),
+    '100.00',
+    'display amount in cart row is 100.00 (Rate × Qty)'
+  );
 
   // Submit and verify ledger posting succeeds
   await (await sinv.sync()).submit();
@@ -211,4 +227,50 @@ test('tax inclusive with discount (10% discount on 100 -> Total 90.00)', async (
   t.true(sinv.submitted, 'discounted invoice submitted with balanced ledger');
 });
 
+test('incoming rate includes tax from PurchaseInvoiceItem', async (t) => {
+  const pinv = fyo.doc.getNewDoc(ModelNameEnum.PurchaseInvoice, {
+    date: new Date('2026-01-01'),
+    account: 'Creditors',
+    party: 'TaxCustomer',
+  });
+
+  await pinv.append('items', {
+    item: 'Item Inclusive 18%',
+    rate: 50,
+    quantity: 2,
+    tax: 'IGST-18',
+    account: 'Cost of Goods Sold',
+  });
+
+  await (await pinv.sync()).submit();
+
+  const incomingRate = await getIncomingRateWithTax(fyo, 'Item Inclusive 18%');
+  t.equals(incomingRate, 59, 'incoming rate is 50 + 18% tax = 59');
+});
+
+test('incoming rate includes tax from StockLedgerEntry fallback', async (t) => {
+  await fyo.doc
+    .getNewDoc(ModelNameEnum.Item, {
+      name: 'Stock Item 18%',
+      rate: 200,
+      tax: 'IGST-18',
+      incomeAccount: 'Sales',
+    })
+    .sync();
+
+  await fyo.doc
+    .getNewDoc(ModelNameEnum.StockLedgerEntry, {
+      item: 'Stock Item 18%',
+      rate: 80,
+      quantity: 5,
+      date: new Date('2026-01-02'),
+      location: 'Stores',
+    })
+    .sync();
+
+  const incomingRate = await getIncomingRateWithTax(fyo, 'Stock Item 18%');
+  t.equals(incomingRate, 94.4, 'incoming rate from SLE is 80 + 18% tax = 94.4');
+});
+
 closeTestFyo(fyo, __filename);
+

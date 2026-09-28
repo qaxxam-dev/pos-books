@@ -285,7 +285,12 @@ import { fyo } from 'src/initFyo';
 import { defineComponent, PropType } from 'vue';
 import { SalesInvoiceItem } from 'models/baseModels/SalesInvoiceItem/SalesInvoiceItem';
 import { Money } from 'pesa';
-import { validateSerialNumberCount, getPOSRateCipherConfig, getItemDisplayAmount } from 'src/utils/pos';
+import {
+  validateSerialNumberCount,
+  getPOSRateCipherConfig,
+  getItemDisplayAmount,
+  getIncomingRateWithTax,
+} from 'src/utils/pos';
 import { encodeNumberToCipher } from 'src/utils/cipher';
 
 export default defineComponent({
@@ -350,6 +355,8 @@ export default defineComponent({
         if (newBatch) {
           this.availableQtyInBatch = await this.getAvailableQtyInBatch();
           this.isExapanded = true;
+          this.valuationRate = 0;
+          await this.fetchValuationRate();
           this.$emit('setExpandedBatchId', this.row.name);
         }
       },
@@ -442,28 +449,11 @@ export default defineComponent({
     async fetchValuationRate() {
       if (this.valuationRate) return;
 
-      const sles = await fyo.db.getAll('StockLedgerEntry', {
-        fields: ['name', 'rate', 'quantity'],
-        filters: { item: this.row.item as string },
-        orderBy: ['date', 'created'],
-        order: 'desc',
-        limit: 10,
-      });
-
-      const inwardSle = sles?.find((s: any) => (s.quantity as number) > 0);
-
-      if (inwardSle && inwardSle.rate) {
-        this.valuationRate = inwardSle.rate as number;
-      } else {
-        const pii = await fyo.db.getAll('PurchaseInvoiceItem', {
-          fields: ['name', 'rate'],
-          filters: { item: this.row.item as string },
-          limit: 1,
-        });
-        if (pii && pii.length > 0 && pii[0].rate) {
-          this.valuationRate = pii[0].rate as number;
-        }
-      }
+      this.valuationRate = await getIncomingRateWithTax(
+        fyo,
+        this.row.item as string,
+        this.row.batch as string | undefined
+      );
     },
 
     async getAvailableQtyInBatch(): Promise<number> {
