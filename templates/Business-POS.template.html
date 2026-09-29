@@ -79,7 +79,7 @@
     <!-- Totaled Amounts -->
     <section class="flex justify-between border-b border-t border-black py-1">
       <p>Total</p>
-      <p>{{ doc.netTotal}}</p>
+      <p>{{ doc.taxInclusive ? doc.grandTotal : doc.netTotal }}</p>
     </section>
 
     <!-- Grand Total -->

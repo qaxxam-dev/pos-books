@@ -1795,16 +1795,22 @@ export function getItemDisplayAmount(
   isTaxInclusive: boolean,
   fyo: Fyo
 ): Money {
-  const rate = (item.rate as Money) ?? fyo.pesa(0);
-  const qty = (item.quantity as number) ?? 0;
+  const rate = isPesa(item.rate)
+    ? (item.rate as Money)
+    : fyo.pesa((item.rate as unknown as number) ?? 0);
+  const qty = Number(item.quantity) || 0;
   let gross = rate.mul(qty);
   if (item.setItemDiscountAmount) {
-    if (!item.itemDiscountAmount?.isZero()) {
-      gross = gross.sub((item.itemDiscountAmount as Money).mul(qty));
+    const discAmt = isPesa(item.itemDiscountAmount)
+      ? (item.itemDiscountAmount as Money)
+      : fyo.pesa((item.itemDiscountAmount as unknown as number) ?? 0);
+    if (!discAmt.isZero()) {
+      gross = gross.sub(discAmt.mul(qty));
     }
   } else if (item.itemDiscountPercent && item.itemDiscountPercent > 0) {
     gross = gross.sub(gross.percent(item.itemDiscountPercent));
   }
+
 
   return gross;
 }

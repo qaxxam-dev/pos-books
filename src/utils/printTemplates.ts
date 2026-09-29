@@ -5,16 +5,13 @@ import { ModelNameEnum } from 'models/types';
 import { FieldTypeEnum, Schema, TargetField } from 'schemas/types';
 import { getValueMapFromList } from 'utils/index';
 import { TemplateFile } from 'utils/types';
-import { showToast } from './interactive';
 import { PrintValues } from './types';
-import {
-  getDocFromNameIfExistsElseNew,
-  getSavePath,
-  showExportInFolder,
-} from './ui';
 import { Money } from 'pesa';
 import { SalesInvoice } from 'models/baseModels/SalesInvoice/SalesInvoice';
 import { Payment } from 'models/baseModels/Payment/Payment';
+import { getItemDisplayAmount } from 'models/helpers';
+import { SalesInvoiceItem } from 'models/baseModels/SalesInvoiceItem/SalesInvoiceItem';
+
 
 export type PrintTemplateHint = {
   [key: string]: string | PrintTemplateHint | PrintTemplateHint[];
@@ -82,6 +79,40 @@ export async function getPrintTemplatePropValues(
         !totalWriteOffPesa.isZero();
     }
   }
+
+  if (
+    values.doc.entryType === ModelNameEnum.SalesInvoice ||
+    values.doc.entryType === ModelNameEnum.SalesQuote
+  ) {
+    const isTaxInclusive = Boolean((doc as SalesInvoice).taxInclusive);
+    (values.doc as PrintTemplateData).taxInclusive = isTaxInclusive;
+    (values.doc as PrintTemplateData).posTotal = isTaxInclusive
+      ? values.doc.grandTotal
+      : values.doc.netTotal;
+
+    if (
+      isTaxInclusive &&
+      Array.isArray(doc.items) &&
+      Array.isArray((values.doc as PrintTemplateData).items)
+    ) {
+      const itemsTable = (values.doc as PrintTemplateData)
+        .items as PrintTemplateData[];
+      doc.items.forEach((itemDoc: Doc, index: number) => {
+        const displayAmount = getItemDisplayAmount(
+          itemDoc as SalesInvoiceItem,
+          true,
+          fyo
+        );
+        if (itemsTable[index]) {
+          itemsTable[index].amount = fyo.format(
+            displayAmount,
+            ModelNameEnum.Currency
+          );
+        }
+      });
+    }
+  }
+
 
   if (doc.referenceType == ModelNameEnum.SalesInvoice) {
     const referenceName = (doc as Payment)?.for![0]?.referenceName;
@@ -235,6 +266,8 @@ export function getPrintTemplatePropHints(schemaName: string, fyo: Fyo) {
   if (schemaName?.endsWith('Invoice')) {
     (hints.doc as PrintTemplateData).totalDiscount = fyo.t`Total Discount`;
     (hints.doc as PrintTemplateData).showHSN = fyo.t`Show HSN`;
+    (hints.doc as PrintTemplateData).taxInclusive = fyo.t`Tax Inclusive`;
+    (hints.doc as PrintTemplateData).posTotal = fyo.t`POS Total`;
   }
   (hints.doc as PrintTemplateData).partyPhone = fyo.t`Party Phone`;
 
@@ -491,6 +524,9 @@ export async function getPathAndMakePDF(
   height: number,
   shouldPrint?: boolean
 ) {
+  const { getSavePath, showExportInFolder } = await import('./ui');
+  const { showToast } = await import('./interactive');
+
   if (!shouldPrint) {
     const { filePath: savePath } = await getSavePath(name, 'pdf');
     if (!savePath) {
@@ -599,6 +635,7 @@ export async function updatePrintTemplates(fyo: Fyo) {
 
   const isLogging = fyo.store.skipTelemetryLogging;
   fyo.store.skipTelemetryLogging = true;
+  const { getDocFromNameIfExistsElseNew } = await import('./ui');
   for (const { name, type, template, width, height } of updateList) {
     const doc = await getDocFromNameIfExistsElseNew(
       ModelNameEnum.PrintTemplate,

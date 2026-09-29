@@ -9,6 +9,8 @@ import {
 } from 'models/helpers';
 import { SalesInvoiceItem } from 'models/baseModels/SalesInvoiceItem/SalesInvoiceItem';
 import { POSProfile } from 'models/baseModels/POSProfile/PosProfile';
+import { getPrintTemplatePropValues } from 'src/utils/printTemplates';
+
 
 const fyo = getTestFyo();
 
@@ -272,5 +274,73 @@ test('incoming rate includes tax from StockLedgerEntry fallback', async (t) => {
   t.equals(incomingRate, 94.4, 'incoming rate from SLE is 80 + 18% tax = 94.4');
 });
 
+test('sales print values show exact amount logic from POS screen for tax inclusive invoices', async (t) => {
+  const sinv = fyo.doc.getNewDoc(ModelNameEnum.SalesInvoice, {
+    isPOS: true,
+    taxInclusive: true,
+    date: new Date('2026-01-01'),
+    account: 'Debtors',
+    party: customer.name,
+  }) as SalesInvoice;
+
+  await sinv.append('items', {
+    item: 'Item Inclusive 18%',
+    rate: 15000,
+    tax: 'IGST-18',
+    quantity: 1,
+    account: 'Sales',
+  });
+
+  await sinv.runFormulas();
+
+  // Internal doc amounts
+  t.equals(sinv.items?.[0].amount?.round(2), '12711.86', 'internal item amount is 12711.86');
+  t.equals(sinv.netTotal?.round(2), '12711.86', 'internal net total is 12711.86');
+  t.equals(sinv.grandTotal?.round(2), '15000.00', 'internal grand total is 15000.00');
+
+  // Print template values
+  const printProps = await getPrintTemplatePropValues(sinv);
+  const printDoc = printProps.doc as any;
+
+  t.equals(printDoc.taxInclusive, true, 'print doc taxInclusive is true');
+  t.equals(printDoc.items[0].rate, '₹ 15,000.00', 'print item rate is ₹ 15,000.00');
+  t.equals(printDoc.items[0].amount, '₹ 15,000.00', 'print item amount matches POS screen (₹ 15,000.00)');
+  t.equals(printDoc.posTotal, '₹ 15,000.00', 'print posTotal is ₹ 15,000.00');
+  t.equals(printDoc.netTotal, '₹ 12,711.86', 'print netTotal is ₹ 12,711.86');
+  t.equals(printDoc.grandTotal, '₹ 15,000.00', 'print grandTotal is ₹ 15,000.00');
+});
+
+test('sales print values for tax exclusive invoices retain standard amounts', async (t) => {
+  const sinv = fyo.doc.getNewDoc(ModelNameEnum.SalesInvoice, {
+    isPOS: true,
+    taxInclusive: false,
+    date: new Date('2026-01-01'),
+    account: 'Debtors',
+    party: customer.name,
+  }) as SalesInvoice;
+
+  await sinv.append('items', {
+    item: 'Item Inclusive 18%',
+    rate: 100,
+    tax: 'IGST-18',
+    quantity: 1,
+    account: 'Sales',
+  });
+
+  await sinv.runFormulas();
+
+  const printProps = await getPrintTemplatePropValues(sinv);
+  const printDoc = printProps.doc as any;
+
+  t.equals(printDoc.taxInclusive, false, 'print doc taxInclusive is false');
+  t.equals(printDoc.items[0].rate, '₹ 100.00', 'print item rate is ₹ 100.00');
+  t.equals(printDoc.items[0].amount, '₹ 100.00', 'print item amount is ₹ 100.00');
+  t.equals(printDoc.posTotal, '₹ 100.00', 'print posTotal is ₹ 100.00');
+  t.equals(printDoc.netTotal, '₹ 100.00', 'print netTotal is ₹ 100.00');
+  t.equals(printDoc.grandTotal, '₹ 118.00', 'print grandTotal is ₹ 118.00');
+});
+
 closeTestFyo(fyo, __filename);
+
+
 
