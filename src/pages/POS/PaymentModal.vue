@@ -1,11 +1,26 @@
 <template>
-  <Modal :open-modal="openModal" class="w-4/6 ml-auto mr-auto" :set-close-listener="false" @closemodal="$emit('toggleModal', 'Payment')">
+  <Modal
+    :open-modal="openModal"
+    class="w-4/6 ml-auto mr-auto"
+    :set-close-listener="false"
+    @closemodal="$emit('toggleModal', 'Payment')"
+  >
     <div
       v-if="sinvDoc && sinvDoc.fieldMap"
       class="px-6 py-6 flex flex-col overflow-y-auto"
-      style="max-height: 88vh;"
+      style="max-height: 88vh"
     >
-      <div class="flex items-center justify-between border-b pb-3 mb-4 dark:border-gray-800">
+      <div
+        class="
+          flex
+          items-center
+          justify-between
+          border-b
+          pb-3
+          mb-4
+          dark:border-gray-800
+        "
+      >
         <div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
             {{ t`POS Payment & Settlement` }}
@@ -15,7 +30,16 @@
           </p>
         </div>
         <div class="text-right">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
+          <span
+            class="
+              text-xs
+              font-semibold
+              text-gray-500
+              uppercase
+              tracking-wider
+              block
+            "
+          >
             {{ t`Grand Total` }}
           </span>
           <span class="text-2xl font-black text-teal-600 dark:text-teal-400">
@@ -29,7 +53,18 @@
         <div class="col-span-7 flex flex-col gap-4">
           <!-- Quick Add Payment Method Buttons -->
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-2">
+            <label
+              class="
+                block
+                text-xs
+                font-bold
+                uppercase
+                tracking-wider
+                text-gray-600
+                dark:text-gray-400
+                mb-2
+              "
+            >
               {{ t`Add Payment Method` }}
             </label>
             <div class="flex flex-wrap gap-2">
@@ -37,7 +72,19 @@
                 v-for="method in allPaymentMethods"
                 :key="method.name"
                 :background="false"
-                class="px-4 py-2 border rounded-md text-sm font-semibold transition-all duration-150 flex items-center gap-1.5"
+                class="
+                  px-4
+                  py-2
+                  border
+                  rounded-md
+                  text-sm
+                  font-semibold
+                  transition-all
+                  duration-150
+                  flex
+                  items-center
+                  gap-1.5
+                "
                 :class="
                   isMethodAdded(method.name)
                     ? 'bg-teal-50 border-teal-500 text-teal-700 dark:bg-teal-950 dark:border-teal-600 dark:text-teal-300'
@@ -46,15 +93,46 @@
                 @click="togglePaymentMethod(method)"
               >
                 <span>{{ method.name }}</span>
-                <span v-if="isMethodAdded(method.name)" class="text-xs bg-teal-200 text-teal-800 dark:bg-teal-800 dark:text-teal-200 px-1.5 py-0.5 rounded-full font-bold">✓</span>
+                <span
+                  v-if="isMethodAdded(method.name)"
+                  class="
+                    text-xs
+                    bg-teal-200
+                    text-teal-800
+                    dark:bg-teal-800 dark:text-teal-200
+                    px-1.5
+                    py-0.5
+                    rounded-full
+                    font-bold
+                  "
+                  >✓</span
+                >
               </Button>
             </div>
           </div>
 
           <!-- Payment Entries Table -->
-          <div class="bg-gray-50 dark:bg-gray-850 p-4 border rounded-lg dark:border-gray-800">
+          <div
+            class="
+              bg-gray-50
+              dark:bg-gray-850
+              p-4
+              border
+              rounded-lg
+              dark:border-gray-800
+            "
+          >
             <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+              <h3
+                class="
+                  text-sm
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-gray-700
+                  dark:text-gray-300
+                "
+              >
                 {{ t`Payment Breakdown` }}
               </h3>
               <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -62,7 +140,10 @@
               </span>
             </div>
 
-            <div v-if="localEntries.length === 0" class="text-center py-6 text-gray-400 text-sm">
+            <div
+              v-if="localEntries.length === 0"
+              class="text-center py-6 text-gray-400 text-sm"
+            >
               {{ t`No payment method selected. Click a payment method above.` }}
             </div>
 
@@ -70,16 +151,37 @@
               <div
                 v-for="(entry, index) in localEntries"
                 :key="entry.id"
-                class="p-3 bg-white dark:bg-gray-900 border rounded-md shadow-sm dark:border-gray-800 flex flex-col gap-2"
+                class="
+                  p-3
+                  bg-white
+                  dark:bg-gray-900
+                  border
+                  rounded-md
+                  shadow-sm
+                  dark:border-gray-800
+                  flex flex-col
+                  gap-2
+                "
               >
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2">
-                    <span class="font-bold text-gray-800 dark:text-gray-200 text-base">
+                    <span
+                      class="
+                        font-bold
+                        text-gray-800
+                        dark:text-gray-200
+                        text-base
+                      "
+                    >
                       {{ entry.paymentMethod }}
                     </span>
                     <span
                       class="text-xs px-2 py-0.5 rounded font-semibold"
-                      :class="entry.isCash ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'"
+                      :class="
+                        entry.isCash
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                      "
                     >
                       {{ entry.isCash ? t`Cash` : t`Non-Cash` }}
                     </span>
@@ -88,14 +190,31 @@
                   <div class="flex items-center gap-2">
                     <button
                       type="button"
-                      class="text-xs font-semibold px-2 py-1 bg-teal-100 text-teal-800 hover:bg-teal-200 dark:bg-teal-900 dark:text-teal-200 rounded transition-colors"
+                      class="
+                        text-xs
+                        font-semibold
+                        px-2
+                        py-1
+                        bg-teal-100
+                        text-teal-800
+                        hover:bg-teal-200
+                        dark:bg-teal-900 dark:text-teal-200
+                        rounded
+                        transition-colors
+                      "
                       @click="fillRemainingForEntry(index)"
                     >
                       {{ t`Fill Balance` }}
                     </button>
                     <button
                       type="button"
-                      class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 p-1 font-bold"
+                      class="
+                        text-xs text-red-600
+                        hover:text-red-800
+                        dark:text-red-400
+                        p-1
+                        font-bold
+                      "
                       @click="removePaymentEntry(index)"
                     >
                       ✕
@@ -120,7 +239,16 @@
                 </div>
 
                 <!-- Non-Cash reference fields -->
-                <div v-if="!entry.isCash" class="grid grid-cols-2 gap-2 pt-1 border-t dark:border-gray-800">
+                <div
+                  v-if="!entry.isCash"
+                  class="
+                    grid grid-cols-2
+                    gap-2
+                    pt-1
+                    border-t
+                    dark:border-gray-800
+                  "
+                >
                   <Data
                     :df="{
                       label: t`Ref / Cheque No`,
@@ -149,20 +277,53 @@
           </div>
 
           <!-- Write Off Widget Section -->
-          <div class="bg-amber-50/60 dark:bg-amber-950/30 p-4 border border-amber-200 dark:border-amber-900 rounded-lg flex flex-col gap-2">
+          <div
+            class="
+              bg-amber-50/60
+              dark:bg-amber-950/30
+              p-4
+              border border-amber-200
+              dark:border-amber-900
+              rounded-lg
+              flex flex-col
+              gap-2
+            "
+          >
             <div class="flex items-center justify-between">
               <div>
-                <h4 class="text-sm font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider">
+                <h4
+                  class="
+                    text-sm
+                    font-bold
+                    text-amber-900
+                    dark:text-amber-300
+                    uppercase
+                    tracking-wider
+                  "
+                >
                   {{ t`Write Off / Shortage` }}
                 </h4>
                 <p class="text-xs text-amber-700 dark:text-amber-400">
                   {{ t`Waive small balance or fractional difference` }}
-                  <span v-if="writeOffAccountName" class="font-semibold"> ({{ writeOffAccountName }})</span>
+                  <span v-if="writeOffAccountName" class="font-semibold">
+                    ({{ writeOffAccountName }})</span
+                  >
                 </p>
               </div>
               <button
                 type="button"
-                class="text-xs font-semibold px-2.5 py-1 bg-amber-200 text-amber-900 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 rounded transition-colors"
+                class="
+                  text-xs
+                  font-semibold
+                  px-2.5
+                  py-1
+                  bg-amber-200
+                  text-amber-900
+                  hover:bg-amber-300
+                  dark:bg-amber-800 dark:text-amber-100
+                  rounded
+                  transition-colors
+                "
                 @click="writeOffRemainingBalance"
               >
                 {{ t`Write Off Balance` }}
@@ -185,48 +346,199 @@
               </div>
             </div>
           </div>
+
+          <!-- Notes / Summary Widget Section -->
+          <div
+            class="
+              bg-gray-50
+              dark:bg-gray-850
+              p-4
+              border
+              rounded-lg
+              dark:border-gray-800
+              flex flex-col
+              gap-2
+            "
+          >
+            <div class="flex items-center justify-between">
+              <h4
+                class="
+                  text-sm
+                  font-bold
+                  text-gray-700
+                  dark:text-gray-300
+                  uppercase
+                  tracking-wider
+                "
+              >
+                {{ t`Notes / Summary` }}
+              </h4>
+            </div>
+            <TextControl
+              :df="{
+                label: t`Notes / Summary`,
+                placeholder: t`Add notes or summary to this bill...`,
+                fieldtype: 'Text',
+                fieldname: 'terms',
+                rows: 2,
+              }"
+              :border="true"
+              :rows="2"
+              input-class="bg-white dark:bg-gray-900"
+              :value="localNotes"
+              @change="(val: string) => updateNotes(val)"
+              @input="(e: Event) => updateNotes(e)"
+            />
+          </div>
         </div>
 
         <!-- Right Column: Summary & Calculations -->
         <div class="col-span-5 flex flex-col justify-between">
-          <div class="bg-gray-50 dark:bg-gray-850 p-4 border rounded-lg dark:border-gray-800 flex flex-col gap-3">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 border-b pb-2 dark:border-gray-700">
+          <div
+            class="
+              bg-gray-50
+              dark:bg-gray-850
+              p-4
+              border
+              rounded-lg
+              dark:border-gray-800
+              flex flex-col
+              gap-3
+            "
+          >
+            <h3
+              class="
+                text-sm
+                font-bold
+                uppercase
+                tracking-wider
+                text-gray-700
+                dark:text-gray-300
+                border-b
+                pb-2
+                dark:border-gray-700
+              "
+            >
               {{ t`Settlement Summary` }}
             </h3>
 
-            <div class="flex justify-between items-center py-1 text-sm text-gray-600 dark:text-gray-400">
+            <div
+              class="
+                flex
+                justify-between
+                items-center
+                py-1
+                text-sm text-gray-600
+                dark:text-gray-400
+              "
+            >
               <span>{{ t`Net Total` }}</span>
-              <span class="font-medium text-gray-800 dark:text-gray-200">{{ fyo.format(sinvDoc?.netTotal, 'Currency') }}</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200">{{
+                fyo.format(sinvDoc?.netTotal, 'Currency')
+              }}</span>
             </div>
 
-            <div class="flex justify-between items-center py-1 text-sm text-gray-600 dark:text-gray-400">
+            <div
+              class="
+                flex
+                justify-between
+                items-center
+                py-1
+                text-sm text-gray-600
+                dark:text-gray-400
+              "
+            >
               <span>{{ t`Taxes & Charges` }}</span>
-              <span class="font-medium text-gray-800 dark:text-gray-200">{{ fyo.format(totalTaxedAmount, 'Currency') }}</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200">{{
+                fyo.format(totalTaxedAmount, 'Currency')
+              }}</span>
             </div>
 
-            <div v-if="isDiscountingEnabled" class="flex justify-between items-center py-1 text-sm text-gray-600 dark:text-gray-400">
+            <div
+              v-if="isDiscountingEnabled"
+              class="
+                flex
+                justify-between
+                items-center
+                py-1
+                text-sm text-gray-600
+                dark:text-gray-400
+              "
+            >
               <span>{{ t`Discounts` }}</span>
-              <span class="font-medium text-gray-800 dark:text-gray-200">{{ fyo.format(itemDiscounts, 'Currency') }}</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200">{{
+                fyo.format(itemDiscounts, 'Currency')
+              }}</span>
             </div>
 
-            <div class="flex justify-between items-center py-2 text-base font-bold border-t border-b dark:border-gray-700 text-gray-900 dark:text-gray-100">
+            <div
+              class="
+                flex
+                justify-between
+                items-center
+                py-2
+                text-base
+                font-bold
+                border-t border-b
+                dark:border-gray-700
+                text-gray-900
+                dark:text-gray-100
+              "
+            >
               <span>{{ t`Grand Total` }}</span>
               <span>{{ fyo.format(grandTotal, 'Currency') }}</span>
             </div>
 
-            <div class="flex justify-between items-center py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+            <div
+              class="
+                flex
+                justify-between
+                items-center
+                py-1
+                text-sm
+                font-semibold
+                text-emerald-700
+                dark:text-emerald-400
+              "
+            >
               <span>{{ t`Total Paid` }}</span>
               <span>{{ fyo.format(totalPaid, 'Currency') }}</span>
             </div>
 
-            <div v-if="!localWriteOff.isZero()" class="flex justify-between items-center py-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
+            <div
+              v-if="!localWriteOff.isZero()"
+              class="
+                flex
+                justify-between
+                items-center
+                py-1
+                text-sm
+                font-semibold
+                text-amber-700
+                dark:text-amber-400
+              "
+            >
               <span>{{ t`Write Off Amount` }}</span>
               <span>{{ fyo.format(localWriteOff, 'Currency') }}</span>
             </div>
 
             <div
               v-if="remainingBalance.gt(0)"
-              class="flex justify-between items-center p-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded text-sm font-bold text-red-700 dark:text-red-300"
+              class="
+                flex
+                justify-between
+                items-center
+                p-2
+                bg-red-50
+                dark:bg-red-950/40
+                border border-red-200
+                dark:border-red-900
+                rounded
+                text-sm
+                font-bold
+                text-red-700
+                dark:text-red-300
+              "
             >
               <span>{{ t`Unpaid Balance` }}</span>
               <span>{{ fyo.format(remainingBalance, 'Currency') }}</span>
@@ -234,7 +546,21 @@
 
             <div
               v-if="paidChange.gt(0)"
-              class="flex justify-between items-center p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded text-sm font-bold text-emerald-700 dark:text-emerald-300"
+              class="
+                flex
+                justify-between
+                items-center
+                p-2
+                bg-emerald-50
+                dark:bg-emerald-950/40
+                border border-emerald-200
+                dark:border-emerald-900
+                rounded
+                text-sm
+                font-bold
+                text-emerald-700
+                dark:text-emerald-300
+              "
             >
               <span>{{ t`Paid Change` }}</span>
               <span>{{ fyo.format(paidChange, 'Currency') }}</span>
@@ -244,7 +570,17 @@
           <!-- Bottom Action Buttons -->
           <div class="grid grid-cols-2 gap-3 mt-6">
             <Button
-              class="col-span-2 py-4 bg-emerald-600 hover:bg-emerald-700 font-bold text-lg rounded-md uppercase transition-colors"
+              class="
+                col-span-2
+                py-4
+                bg-emerald-600
+                hover:bg-emerald-700
+                font-bold
+                text-lg
+                rounded-md
+                uppercase
+                transition-colors
+              "
               @click="payAndPrintTransaction"
             >
               <slot>
@@ -253,22 +589,42 @@
             </Button>
 
             <Button
-              class="col-span-1 py-3 bg-green-600 hover:bg-green-700 font-bold text-base rounded-md uppercase transition-colors"
-              style="color: #ffffff !important;"
+              class="
+                col-span-1
+                py-3
+                bg-green-600
+                hover:bg-green-700
+                font-bold
+                text-base
+                rounded-md
+                uppercase
+                transition-colors
+              "
+              style="color: #ffffff !important"
               @click="payTransaction"
             >
               <slot>
-                <span style="color: #ffffff !important;">{{ t`Pay Only` }}</span>
+                <span style="color: #ffffff !important">{{ t`Pay Only` }}</span>
               </slot>
             </Button>
 
             <Button
-              class="col-span-1 py-3 bg-red-500 hover:bg-red-600 font-bold text-base rounded-md uppercase transition-colors"
-              style="color: #ffffff !important;"
+              class="
+                col-span-1
+                py-3
+                bg-red-500
+                hover:bg-red-600
+                font-bold
+                text-base
+                rounded-md
+                uppercase
+                transition-colors
+              "
+              style="color: #ffffff !important"
               @click="cancelTransaction"
             >
               <slot>
-                <span style="color: #ffffff !important;">{{ t`Cancel` }}</span>
+                <span style="color: #ffffff !important">{{ t`Cancel` }}</span>
               </slot>
             </Button>
           </div>
@@ -283,6 +639,7 @@ import Button from 'src/components/Button.vue';
 import Currency from 'src/components/Controls/Currency.vue';
 import Data from 'src/components/Controls/Data.vue';
 import DateControl from 'src/components/Controls/Date.vue';
+import TextControl from 'src/components/Controls/Text.vue';
 import Modal from 'src/components/Modal.vue';
 import { Money } from 'pesa';
 import { SalesInvoice } from 'models/baseModels/SalesInvoice/SalesInvoice';
@@ -305,6 +662,7 @@ export default defineComponent({
     Button,
     Data,
     DateControl,
+    TextControl,
   },
   props: {
     openModal: {
@@ -340,6 +698,7 @@ export default defineComponent({
       allPaymentMethods: [] as PaymentMethodObj[],
       localEntries: [] as POSPaymentEntry[],
       localWriteOff: fyo.pesa(0),
+      localNotes: '',
     };
   },
   computed: {
@@ -397,11 +756,14 @@ export default defineComponent({
     initLocalState() {
       this.localEntries = [];
       this.localWriteOff = fyo.pesa(0);
+      this.localNotes = (this.sinvDoc?.terms as string) || '';
 
       const targetAmount = this.grandTotal;
 
       if (this.allPaymentMethods.length > 0) {
-        const defaultCashMethod = this.allPaymentMethods.find(m => m.type === 'Cash') || this.allPaymentMethods[0];
+        const defaultCashMethod =
+          this.allPaymentMethods.find((m) => m.type === 'Cash') ||
+          this.allPaymentMethods[0];
         this.localEntries.push({
           id: String(Date.now()),
           paymentMethod: defaultCashMethod.name,
@@ -414,11 +776,13 @@ export default defineComponent({
     },
 
     isMethodAdded(methodName: string): boolean {
-      return this.localEntries.some(e => e.paymentMethod === methodName);
+      return this.localEntries.some((e) => e.paymentMethod === methodName);
     },
 
     togglePaymentMethod(method: PaymentMethodObj) {
-      const existingIdx = this.localEntries.findIndex(e => e.paymentMethod === method.name);
+      const existingIdx = this.localEntries.findIndex(
+        (e) => e.paymentMethod === method.name
+      );
       if (existingIdx !== -1) {
         if (this.localEntries.length > 1) {
           this.localEntries.splice(existingIdx, 1);
@@ -462,14 +826,20 @@ export default defineComponent({
       let otherSum = fyo.pesa(0);
       for (let i = 0; i < this.localEntries.length; i++) {
         if (i !== index) {
-          otherSum = otherSum.add((this.localEntries[i].amount ?? fyo.pesa(0)) as any);
+          otherSum = otherSum.add(
+            (this.localEntries[i].amount ?? fyo.pesa(0)) as any
+          );
         }
       }
 
-      const coveredByOther = otherSum.add((this.localWriteOff ?? fyo.pesa(0)) as any);
+      const coveredByOther = otherSum.add(
+        (this.localWriteOff ?? fyo.pesa(0)) as any
+      );
       const remaining = this.grandTotal.sub(coveredByOther as any);
 
-      this.localEntries[index].amount = remaining.gt(0) ? remaining : fyo.pesa(0);
+      this.localEntries[index].amount = remaining.gt(0)
+        ? remaining
+        : fyo.pesa(0);
     },
 
     writeOffRemainingBalance() {
@@ -483,10 +853,44 @@ export default defineComponent({
       }
     },
 
+    async updateNotes(val: unknown) {
+      if (typeof val === 'string') {
+        this.localNotes = val;
+      } else if (val === null || val === undefined) {
+        this.localNotes = '';
+      } else if (
+        val &&
+        typeof val === 'object' &&
+        'target' in val &&
+        typeof (val as { target: { value?: unknown } }).target?.value ===
+          'string'
+      ) {
+        this.localNotes = (val as { target: { value: string } }).target.value;
+      }
+      if (this.sinvDoc) {
+        this.sinvDoc.terms = this.localNotes;
+        if (typeof this.sinvDoc.set === 'function') {
+          await this.sinvDoc.set('terms', this.localNotes);
+        }
+      }
+    },
+
     syncStateToParent() {
-      const activeEntries = this.localEntries.filter(e => e.amount && !e.amount.isZero());
-      this.$emit('setPaymentEntries', activeEntries.length ? activeEntries : this.localEntries);
+      const activeEntries = this.localEntries.filter(
+        (e) => e.amount && !e.amount.isZero()
+      );
+      this.$emit(
+        'setPaymentEntries',
+        activeEntries.length ? activeEntries : this.localEntries
+      );
       this.$emit('setWriteOffAmount', this.localWriteOff);
+
+      if (this.sinvDoc) {
+        this.sinvDoc.terms = this.localNotes;
+        if (typeof this.sinvDoc.set === 'function') {
+          void this.sinvDoc.set('terms', this.localNotes);
+        }
+      }
 
       if (this.localEntries.length > 0) {
         this.$emit('setPaymentMethod', this.localEntries[0].paymentMethod);
@@ -521,6 +925,13 @@ export default defineComponent({
     cancelTransaction() {
       this.localEntries = [];
       this.localWriteOff = fyo.pesa(0);
+      this.localNotes = '';
+      if (this.sinvDoc) {
+        this.sinvDoc.terms = '';
+        if (typeof this.sinvDoc.set === 'function') {
+          void this.sinvDoc.set('terms', '');
+        }
+      }
       this.$emit('setPaidAmount', fyo.pesa(0));
       this.$emit('toggleModal', 'Payment');
     },

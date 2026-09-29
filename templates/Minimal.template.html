@@ -118,7 +118,10 @@
     <section class="flex py-1 text-lg" v-for="row in doc.items" :key="row.name">
       <div class="w-3/12 text-left">
         <div>{{ row.item }}</div>
-        <div v-if="row.imei || row.links?.item?.imei" class="text-xs text-gray-500">
+        <div
+          v-if="row.imei || row.links?.item?.imei"
+          class="text-xs text-gray-500"
+        >
           {{ t`IMEI` }}: {{ row.imei || row.links?.item?.imei }}
         </div>
       </div>
@@ -135,85 +138,117 @@
     </section>
   </section>
 
+  <!-- Bill Notes / Summary -->
+  <section class="mt-6 px-12" v-if="doc.terms">
+    <h3 class="uppercase text-sm tracking-widest font-semibold text-gray-800">
+      {{ t`Notes` }}
+    </h3>
+    <p class="mt-2 text-base whitespace-pre-line">{{ doc.terms }}</p>
+  </section>
+
   <!-- Invoice Footer -->
-  <footer class="flex px-12 py-10">
-    <!-- Invoice Terms -->
-    <section class="w-1/2" v-if="doc.terms">
-      <h3 class="uppercase text-sm tracking-widest font-semibold text-gray-800">
-        {{ t`Notes` }}
-      </h3>
-      <p class="mt-4 text-lg whitespace-pre-line">{{ doc.terms }}</p>
-    </section>
-
+  <footer class="flex flex-col px-12 py-10">
     <!-- Totaled Amounts -->
-    <section class="w-1/2 text-lg ml-auto">
-      <!-- Subtotal -->
-      <div class="flex pl-2 justify-between py-1">
-        <h3>{{ t`Subtotal` }}</h3>
-        <p>{{ doc.netTotal }}</p>
-      </div>
+    <div class="flex justify-end">
+      <section class="w-1/2 text-lg">
+        <!-- Subtotal -->
+        <div class="flex pl-2 justify-between py-1">
+          <h3>{{ t`Subtotal` }}</h3>
+          <p>{{ doc.netTotal }}</p>
+        </div>
 
-      <!-- Discount (if applied before tax) -->
-      <div
-        class="flex pl-2 justify-between py-1"
-        v-if="doc.totalDiscount && !doc.discountAfterTax"
-      >
-        <h3>{{ t`Discount` }}</h3>
-        <p>{{ doc.totalDiscount }}</p>
-      </div>
+        <!-- Discount (if applied before tax) -->
+        <div
+          class="flex pl-2 justify-between py-1"
+          v-if="doc.totalDiscount && !doc.discountAfterTax"
+        >
+          <h3>{{ t`Discount` }}</h3>
+          <p>{{ doc.totalDiscount }}</p>
+        </div>
 
-      <!-- Tax Breakdown -->
-      <div
-        class="flex pl-2 justify-between py-1"
-        v-for="tax in doc.taxes"
-        :key="tax.name"
-      >
-        <h3>{{ tax.account }}</h3>
-        <p>{{ tax.amount }}</p>
-      </div>
+        <!-- Tax Breakdown -->
+        <div
+          class="flex pl-2 justify-between py-1"
+          v-for="tax in doc.taxes"
+          :key="tax.name"
+        >
+          <h3>{{ tax.account }}</h3>
+          <p>{{ tax.amount }}</p>
+        </div>
 
-      <!-- Discount (if applied after tax) -->
-      <div
-        class="flex pl-2 justify-between py-1"
-        v-if="doc.totalDiscount && doc.discountAfterTax"
-      >
-        <h3>{{ t`Discount` }}</h3>
-        <p>{{ doc.totalDiscount }}</p>
-      </div>
+        <!-- Discount (if applied after tax) -->
+        <div
+          class="flex pl-2 justify-between py-1"
+          v-if="doc.totalDiscount && doc.discountAfterTax"
+        >
+          <h3>{{ t`Discount` }}</h3>
+          <p>{{ doc.totalDiscount }}</p>
+        </div>
 
-      <!-- Grand Total -->
-      <div
-        class="flex pl-2 justify-between py-1 font-semibold"
-        :style="{ color: print.color }"
-      >
-        <h3>{{ t`Grand Total` }}</h3>
-        <p>{{ doc.grandTotal }}</p>
-      </div>
+        <!-- Grand Total -->
+        <div
+          class="flex pl-2 justify-between py-1 font-semibold"
+          :style="{ color: print.color }"
+        >
+          <h3>{{ t`Grand Total` }}</h3>
+          <p>{{ doc.grandTotal }}</p>
+        </div>
 
-      <!-- Payment Details -->
-      <div
-        class="flex pl-2 justify-between py-1 text-sm text-gray-700 border-t mt-1"
-        v-for="(row, idx) in doc.paymentDetails"
-        :key="idx"
-      >
-        <h3>Paid ({{ row.paymentMethod }})</h3>
-        <p>{{ row.amount }}</p>
-      </div>
-      <div
-        class="flex pl-2 justify-between py-1 text-sm text-red-600 font-medium border-t mt-1"
-        v-if="doc.hasWriteOff"
-      >
-        <h3>{{ t`Write Off` }}</h3>
-        <p>{{ doc.writeOff }}</p>
-      </div>
-      <div
-        class="flex pl-2 justify-between py-1 text-sm font-semibold text-gray-900 border-t mt-1"
-        v-if="doc.paymentDetails && doc.paymentDetails.length"
-      >
-        <h3>{{ t`Outstanding Balance` }}</h3>
-        <p>{{ doc.paymentDetails[doc.paymentDetails.length - 1].outstandingAmount }}</p>
-      </div>
-    </section>
+        <!-- Payment Details -->
+        <div
+          class="
+            flex
+            pl-2
+            justify-between
+            py-1
+            text-sm text-gray-700
+            border-t
+            mt-1
+          "
+          v-for="(row, idx) in doc.paymentDetails"
+          :key="idx"
+        >
+          <h3>Paid ({{ row.paymentMethod }})</h3>
+          <p>{{ row.amount }}</p>
+        </div>
+        <div
+          class="
+            flex
+            pl-2
+            justify-between
+            py-1
+            text-sm text-red-600
+            font-medium
+            border-t
+            mt-1
+          "
+          v-if="doc.hasWriteOff"
+        >
+          <h3>{{ t`Write Off` }}</h3>
+          <p>{{ doc.writeOff }}</p>
+        </div>
+        <div
+          class="
+            flex
+            pl-2
+            justify-between
+            py-1
+            text-sm
+            font-semibold
+            text-gray-900
+            border-t
+            mt-1
+          "
+          v-if="doc.paymentDetails && doc.paymentDetails.length"
+        >
+          <h3>{{ t`Outstanding Balance` }}</h3>
+          <p>
+            {{ doc.paymentDetails[doc.paymentDetails.length -
+            1].outstandingAmount }}
+          </p>
+        </div>
+      </section>
+    </div>
   </footer>
 
   <!-- Terms and Conditions -->

@@ -53,7 +53,9 @@
           <p v-if="doc.partyPhone || doc.links?.party?.phone">
             {{ t`Phone` }}: {{ doc.partyPhone || doc.links?.party?.phone }}
           </p>
-          <p v-if="doc.links?.party?.gstin">GSTIN: {{ doc.links.party.gstin }}</p>
+          <p v-if="doc.links?.party?.gstin">
+            GSTIN: {{ doc.links.party.gstin }}
+          </p>
         </div>
       </section>
     </div>
@@ -79,7 +81,10 @@
     >
       <div class="w-3/12">
         <div>{{ row.item }}</div>
-        <div v-if="row.imei || row.links?.item?.imei" class="text-xs text-gray-500">
+        <div
+          v-if="row.imei || row.links?.item?.imei"
+          class="text-xs text-gray-500"
+        >
           {{ t`IMEI` }}: {{ row.imei || row.links?.item?.imei }}
         </div>
       </div>
@@ -92,6 +97,12 @@
       <div class="w-3/12 text-right">{{ row.rate }}</div>
       <div class="w-3/12 text-right">{{ row.amount }}</div>
     </section>
+  </section>
+
+  <!-- Bill Notes / Summary -->
+  <section class="mt-6 px-12" v-if="doc.terms">
+    <h3 class="text-lg font-semibold">{{ t`Notes` }}</h3>
+    <p class="mt-2 text-base whitespace-pre-line">{{ doc.terms }}</p>
   </section>
 
   <!-- Invoice Footer -->
@@ -139,28 +150,47 @@
     </section>
 
     <!-- Payment Details -->
-    <section v-if="doc.paymentDetails && doc.paymentDetails.length" class="mt-6 flex justify-end">
+    <section
+      v-if="doc.paymentDetails && doc.paymentDetails.length"
+      class="mt-6 flex justify-end"
+    >
       <div class="w-1/2 bg-gray-50 p-4 rounded border">
-        <h4 class="font-semibold text-gray-800 border-b pb-2 mb-2">{{ t`Payment Summary` }}</h4>
-        <div v-for="(row, idx) in doc.paymentDetails" :key="idx" class="flex justify-between py-1 text-sm text-gray-700">
+        <h4 class="font-semibold text-gray-800 border-b pb-2 mb-2">
+          {{ t`Payment Summary` }}
+        </h4>
+        <div
+          v-for="(row, idx) in doc.paymentDetails"
+          :key="idx"
+          class="flex justify-between py-1 text-sm text-gray-700"
+        >
           <span>Paid ({{ row.paymentMethod }})</span>
           <span class="font-medium">{{ row.amount }}</span>
         </div>
-        <div v-if="doc.hasWriteOff" class="flex justify-between py-1 text-sm text-red-600 font-medium">
+        <div
+          v-if="doc.hasWriteOff"
+          class="flex justify-between py-1 text-sm text-red-600 font-medium"
+        >
           <span>{{ t`Write Off` }}</span>
           <span>{{ doc.writeOff }}</span>
         </div>
-        <div class="flex justify-between border-t pt-2 mt-2 font-bold text-sm text-gray-900">
+        <div
+          class="
+            flex
+            justify-between
+            border-t
+            pt-2
+            mt-2
+            font-bold
+            text-sm text-gray-900
+          "
+        >
           <span>{{ t`Outstanding Balance` }}</span>
-          <span>{{ doc.paymentDetails[doc.paymentDetails.length - 1].outstandingAmount }}</span>
+          <span
+            >{{ doc.paymentDetails[doc.paymentDetails.length -
+            1].outstandingAmount }}</span
+          >
         </div>
       </div>
-    </section>
-
-    <!-- Invoice Terms -->
-    <section class="mt-12" v-if="doc.terms">
-      <h3 class="text-lg font-semibold">{{t`Notes`}}</h3>
-      <p class="mt-4 text-lg whitespace-pre-line">{{ doc.terms }}</p>
     </section>
 
     <div v-if="print.amountInWords" class="flex justify-end mt-10">
