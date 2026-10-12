@@ -821,7 +821,10 @@ export default defineComponent({
       this.itemQtyMap = await getItemQtyMap(this.sinvDoc as SalesInvoice);
     },
     isTaxInclusive(): boolean {
-      return isPOSTaxInclusive(this.fyo, this.posProfile as POSProfile);
+      if (this.sinvDoc && typeof this.sinvDoc.taxInclusive === 'boolean') {
+        return this.sinvDoc.taxInclusive;
+      }
+      return isPOSTaxInclusive(this.fyo);
     },
     setSinvDoc() {
       this.sinvDoc = this.fyo.doc.getNewDoc(ModelNameEnum.SalesInvoice, {

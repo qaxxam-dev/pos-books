@@ -63,6 +63,27 @@
       "fieldtype": "Check",
       "default": false,
       "section": "Features"
+    },
+    {
+      "fieldname": "barcodeSeries",
+      "label": "Barcode Number Series",
+      "fieldtype": "Data",
+      "default": "BC-1001",
+      "section": "Barcodes"
+    },
+    {
+      "fieldname": "barcodeLabelWidth",
+      "label": "Barcode Label Width (mm)",
+      "fieldtype": "Int",
+      "default": 50,
+      "section": "Barcodes"
+    },
+    {
+      "fieldname": "barcodeLabelHeight",
+      "label": "Barcode Label Height (mm)",
+      "fieldtype": "Int",
+      "default": 25,
+      "section": "Barcodes"
     }
   ]
 }

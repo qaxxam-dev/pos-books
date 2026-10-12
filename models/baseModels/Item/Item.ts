@@ -13,6 +13,7 @@ import {
 import { ValidationError } from 'fyo/utils/errors';
 import { Money } from 'pesa';
 import { AccountRootTypeEnum, AccountTypeEnum } from '../Account/types';
+import { generateNextBarcode } from 'models/inventory/helpers';
 
 interface UOMConversionItem {
   name: string;
@@ -114,6 +115,20 @@ export class Item extends Doc {
     if (this.imei !== undefined && this.imei !== null && this.imei !== '') {
       this.imei = String(this.imei).trim();
     }
+
+    if (
+      this.notInserted &&
+      this.fyo.singles.InventorySettings?.enableBarcodes &&
+      (!this.barcode || String(this.barcode).trim() === '')
+    ) {
+      this.barcode = await generateNextBarcode(this.fyo);
+    }
+  }
+
+  async generateBarcode(): Promise<string> {
+    const nextBarcode = await generateNextBarcode(this.fyo);
+    this.barcode = nextBarcode;
+    return nextBarcode;
   }
 
   async afterSync(): Promise<void> {
@@ -217,6 +232,23 @@ export class Item extends Doc {
             tax: doc.tax as string,
           });
           await router.push(`/edit/PurchaseInvoice/${invoice.name!}`);
+        },
+      },
+      {
+        group: fyo.t`Print`,
+        label: fyo.t`Print Barcode Sticker`,
+        condition: (doc) => !doc.notInserted && !!doc.barcode,
+        action: async (doc) => {
+          const { openBarcodePrintModal } = await import('src/utils/printBarcode');
+          openBarcodePrintModal([
+            {
+              item: doc.name as string,
+              itemName: doc.name as string,
+              barcode: doc.barcode as string,
+              rate: doc.rate as number,
+              quantity: 1,
+            },
+          ]);
         },
       },
     ];

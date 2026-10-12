@@ -19,7 +19,6 @@ export class POSProfile extends Doc {
   hideUnavailableItems?: boolean;
   canEditDiscount?: boolean;
   ignorePricingRule?: boolean;
-  taxInclusive?: boolean;
   encodeIncomingRate?: boolean;
   rateCipherWord?: string;
   rateCipherMap?: string;

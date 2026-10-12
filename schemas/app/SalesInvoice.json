@@ -113,10 +113,10 @@
     },
     {
       "fieldname": "taxInclusive",
+      "label": "Sales Rate Includes Tax",
       "fieldtype": "Check",
       "default": false,
-      "hidden": true,
-      "readOnly": true
+      "tab": "Settings"
     },
     {
       "fieldname": "isPricingRuleApplied",

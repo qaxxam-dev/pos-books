@@ -164,6 +164,20 @@
       "section": "Features"
     },
     {
+      "fieldname": "salesTaxInclusive",
+      "label": "Sales Rate Includes Tax",
+      "fieldtype": "Check",
+      "default": false,
+      "section": "Features"
+    },
+    {
+      "fieldname": "purchaseTaxInclusive",
+      "label": "Purchase Rate Includes Tax",
+      "fieldtype": "Check",
+      "default": false,
+      "section": "Features"
+    },
+    {
       "fieldname": "fiscalYearStart",
       "label": "Fiscal Year Start Date",
       "fieldtype": "Date",

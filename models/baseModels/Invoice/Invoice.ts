@@ -1401,6 +1401,12 @@ export abstract class Invoice extends Transactional {
   };
 
   static defaults: DefaultMap = {
+    taxInclusive: (doc) => {
+      if (doc instanceof Invoice && doc.isSales) {
+        return Boolean(doc.fyo.singles.AccountingSettings?.salesTaxInclusive);
+      }
+      return Boolean(doc.fyo.singles.AccountingSettings?.purchaseTaxInclusive);
+    },
     makeAutoPayment: (doc) =>
       doc instanceof Invoice && !!doc.autoPaymentAccount,
     makeAutoStockTransfer: (doc) =>

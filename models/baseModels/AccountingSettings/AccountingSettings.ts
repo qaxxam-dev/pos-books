@@ -28,6 +28,8 @@ export class AccountingSettings extends Doc {
   enablePointOfSaleWithOutInventory?: boolean;
   enablePartialPayment?: boolean;
   enableitemGroup?: boolean;
+  salesTaxInclusive?: boolean;
+  purchaseTaxInclusive?: boolean;
 
   static filters: FiltersMap = {
     writeOffAccount: () => ({

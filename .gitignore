@@ -24,6 +24,9 @@ yarn-error.log*
 *.sln
 *.sw?
 *.code-workspace
+.local
+*.local
+*.local*
 
 #Electron-builder output
 /dist_electron

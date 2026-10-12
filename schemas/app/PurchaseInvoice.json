@@ -40,6 +40,13 @@
       "tab": "Settings"
     },
     {
+      "fieldname": "taxInclusive",
+      "label": "Purchase Rate Includes Tax",
+      "fieldtype": "Check",
+      "default": false,
+      "tab": "Settings"
+    },
+    {
       "fieldname": "items",
       "label": "Items",
       "fieldtype": "Table",

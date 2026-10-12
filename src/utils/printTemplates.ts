@@ -10,8 +10,7 @@ import { Money } from 'pesa';
 import { SalesInvoice } from 'models/baseModels/SalesInvoice/SalesInvoice';
 import { Payment } from 'models/baseModels/Payment/Payment';
 import { getItemDisplayAmount } from 'models/helpers';
-import { SalesInvoiceItem } from 'models/baseModels/SalesInvoiceItem/SalesInvoiceItem';
-
+import { InvoiceItem } from 'models/baseModels/InvoiceItem/InvoiceItem';
 
 export type PrintTemplateHint = {
   [key: string]: string | PrintTemplateHint | PrintTemplateHint[];
@@ -82,9 +81,10 @@ export async function getPrintTemplatePropValues(
 
   if (
     values.doc.entryType === ModelNameEnum.SalesInvoice ||
-    values.doc.entryType === ModelNameEnum.SalesQuote
+    values.doc.entryType === ModelNameEnum.SalesQuote ||
+    values.doc.entryType === ModelNameEnum.PurchaseInvoice
   ) {
-    const isTaxInclusive = Boolean((doc as SalesInvoice).taxInclusive);
+    const isTaxInclusive = Boolean((doc as Invoice).taxInclusive);
     (values.doc as PrintTemplateData).taxInclusive = isTaxInclusive;
     (values.doc as PrintTemplateData).posTotal = isTaxInclusive
       ? values.doc.grandTotal
@@ -99,7 +99,7 @@ export async function getPrintTemplatePropValues(
         .items as PrintTemplateData[];
       doc.items.forEach((itemDoc: Doc, index: number) => {
         const displayAmount = getItemDisplayAmount(
-          itemDoc as SalesInvoiceItem,
+          itemDoc as InvoiceItem,
           true,
           fyo
         );
@@ -112,7 +112,6 @@ export async function getPrintTemplatePropValues(
       });
     }
   }
-
 
   if (doc.referenceType == ModelNameEnum.SalesInvoice) {
     const referenceName = (doc as Payment)?.for![0]?.referenceName;

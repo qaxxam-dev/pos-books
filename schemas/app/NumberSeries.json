@@ -66,6 +66,10 @@
         {
           "value": "PricingRule",
           "label": "Pricing Rule"
+        },
+        {
+          "value": "Item",
+          "label": "Item"
         }
       ],
       "default": "-",

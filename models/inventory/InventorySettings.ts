@@ -1,5 +1,5 @@
 import { Doc } from 'fyo/model/doc';
-import { FiltersMap, ReadOnlyMap } from 'fyo/model/types';
+import { FiltersMap, HiddenMap, ReadOnlyMap } from 'fyo/model/types';
 import { AccountTypeEnum } from 'models/baseModels/Account/types';
 
 export class InventorySettings extends Doc {
@@ -13,6 +13,9 @@ export class InventorySettings extends Doc {
   enableUomConversions?: boolean;
   enableStockReturns?: boolean;
   enablePointOfSale?: boolean;
+  barcodeSeries?: string;
+  barcodeLabelWidth?: number;
+  barcodeLabelHeight?: number;
 
   static filters: FiltersMap = {
     stockInHand: () => ({
@@ -48,5 +51,11 @@ export class InventorySettings extends Doc {
     enablePointOfSale: () => {
       return !!this.fyo.singles.POSSettings?.isShiftOpen;
     },
+  };
+
+  hidden: HiddenMap = {
+    barcodeSeries: () => !this.enableBarcodes,
+    barcodeLabelWidth: () => !this.enableBarcodes,
+    barcodeLabelHeight: () => !this.enableBarcodes,
   };
 }

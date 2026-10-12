@@ -13,6 +13,7 @@ import { TransferItem } from './TransferItem';
 import type { SerialNumberStatus } from './types';
 import BatchSeries from 'fyo/models/BatchSeries';
 import SerialNumberSeries from 'fyo/models/SerialNumberSeries';
+import NumberSeries from 'fyo/models/NumberSeries';
 
 export async function validateBatch(
   doc: StockMovement | StockTransfer | Invoice
@@ -694,4 +695,76 @@ export async function generateBatchForItem(
 
   const success = await createBatch(fyo, itemName, batchName);
   return success ? batchName : undefined;
+}
+
+export async function generateNextBarcode(fyo: Fyo): Promise<string> {
+  const inventorySettings = fyo.singles.InventorySettings;
+  const rawSeries =
+    (inventorySettings?.barcodeSeries as string)?.trim() || 'BC-1001';
+
+  let prefix = 'BC-';
+  let start = 1001;
+  let padZeros = 4;
+
+  const match = rawSeries.match(/^(.*?)(\d+)$/);
+  if (match) {
+    prefix = match[1];
+    start = parseInt(match[2], 10);
+    padZeros = match[2].length;
+  } else if (rawSeries.endsWith('-')) {
+    prefix = rawSeries;
+    start = 1001;
+    padZeros = 4;
+  } else {
+    prefix = rawSeries + '-';
+    start = 1001;
+    padZeros = 4;
+  }
+
+  const seriesName = `Barcode-${prefix}`;
+  let seriesDoc: NumberSeries;
+  const exists = await fyo.db.exists(ModelNameEnum.NumberSeries, seriesName);
+
+  if (!exists) {
+    seriesDoc = fyo.doc.getNewDoc(ModelNameEnum.NumberSeries, {
+      name: seriesName,
+      start,
+      current: start - 1,
+      padZeros,
+      referenceType: ModelNameEnum.Item,
+    }) as NumberSeries;
+    await seriesDoc.sync();
+  } else {
+    seriesDoc = (await fyo.doc.getDoc(
+      ModelNameEnum.NumberSeries,
+      seriesName
+    )) as NumberSeries;
+  }
+
+  let candidate = '';
+  let isUnique = false;
+  let attempts = 0;
+  let currentValue =
+    seriesDoc.current !== undefined && seriesDoc.current !== null
+      ? (seriesDoc.current as number)
+      : start - 1;
+
+  while (!isUnique && attempts < 1000) {
+    attempts++;
+    currentValue++;
+    candidate = getPaddedName(prefix, currentValue, padZeros);
+
+    const items = await fyo.db.getAllRaw(ModelNameEnum.Item, {
+      filters: { barcode: candidate },
+    });
+
+    if (!items || items.length === 0) {
+      isUnique = true;
+    }
+  }
+
+  await seriesDoc.set('current', currentValue);
+  await seriesDoc.sync();
+
+  return candidate;
 }

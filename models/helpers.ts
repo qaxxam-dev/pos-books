@@ -40,7 +40,6 @@ import { safeParseFloat } from 'utils/index';
 import { PriceList } from './baseModels/PriceList/PriceList';
 import { InvoiceItem } from './baseModels/InvoiceItem/InvoiceItem';
 import { SalesInvoiceItem } from './baseModels/SalesInvoiceItem/SalesInvoiceItem';
-import { POSProfile } from './baseModels/POSProfile/PosProfile';
 import { ItemQtyMap, ItemVisibility, POSItem } from 'src/components/POS/types';
 import { ValuationMethod } from './inventory/types';
 import { QueryFilter } from 'utils/db/types';
@@ -70,12 +69,18 @@ export function getInvoiceActions(
   fyo: Fyo,
   schemaName: ModelNameEnum.SalesInvoice | ModelNameEnum.PurchaseInvoice
 ): Action[] {
-  return [
+  const actions: Action[] = [
     getMakePaymentAction(fyo),
     getMakeStockTransferAction(fyo, schemaName),
     getLedgerLinkAction(fyo),
     getMakeReturnDocAction(fyo),
   ];
+
+  if (schemaName === ModelNameEnum.PurchaseInvoice) {
+    actions.push(getPrintBarcodeStickersAction(fyo));
+  }
+
+  return actions;
 }
 
 export async function getItemQtyMap(doc: SalesInvoice): Promise<ItemQtyMap> {
@@ -172,6 +177,57 @@ export function getMakeStockTransferAction(
       const { routeTo } = await import('src/utils/ui');
       const path = `/edit/${transfer.schemaName}/${transfer.name}`;
       await routeTo(path);
+    },
+  };
+}
+
+export function getPrintBarcodeStickersAction(fyo: Fyo): Action {
+  return {
+    group: fyo.t`Print`,
+    label: fyo.t`Print Barcode Stickers`,
+    condition: (doc: Doc) => {
+      const invoice = doc as Invoice;
+      return (
+        !doc.notInserted &&
+        !!fyo.singles.InventorySettings?.enableBarcodes &&
+        (invoice.items ?? []).length > 0
+      );
+    },
+    action: async (doc: Doc) => {
+      const invoice = doc as Invoice;
+      const itemsToPrint: Array<{
+        item: string;
+        itemName: string;
+        barcode: string;
+        rate: number;
+        quantity: number;
+      }> = [];
+
+      for (const row of invoice.items ?? []) {
+        if (!row.item) continue;
+        const itemDoc = await fyo.doc.getDoc(ModelNameEnum.Item, row.item);
+        if (itemDoc && itemDoc.barcode) {
+          itemsToPrint.push({
+            item: itemDoc.name as string,
+            itemName: (itemDoc.itemCode || itemDoc.name) as string,
+            barcode: itemDoc.barcode as string,
+            rate: (itemDoc.rate ?? row.rate ?? 0) as number,
+            quantity: Math.max(1, Math.round(Number(row.quantity) || 1)),
+          });
+        }
+      }
+
+      if (itemsToPrint.length === 0) {
+        const { showToast } = await import('src/utils/interactive');
+        showToast({
+          message: fyo.t`No items with barcodes found in this invoice`,
+          type: 'info',
+        });
+        return;
+      }
+
+      const { openBarcodePrintModal } = await import('src/utils/printBarcode');
+      openBarcodePrintModal(itemsToPrint);
     },
   };
 }
@@ -1780,29 +1836,23 @@ export async function isLoyaltyProgramExpiredAndMaxed(
   return result;
 }
 
-export function isPOSTaxInclusive(
-  fyo: Fyo,
-  posProfile?: POSProfile | null
-): boolean {
-  if (posProfile && typeof posProfile.taxInclusive === 'boolean') {
-    return posProfile.taxInclusive;
-  }
-  return Boolean(fyo.singles.POSSettings?.taxInclusive);
+export function isPOSTaxInclusive(fyo: Fyo): boolean {
+  return Boolean(fyo.singles.AccountingSettings?.salesTaxInclusive);
 }
 
 export function getItemDisplayAmount(
-  item: SalesInvoiceItem,
+  item: InvoiceItem | SalesInvoiceItem,
   isTaxInclusive: boolean,
   fyo: Fyo
 ): Money {
   const rate = isPesa(item.rate)
-    ? (item.rate as Money)
+    ? item.rate
     : fyo.pesa((item.rate as unknown as number) ?? 0);
   const qty = Number(item.quantity) || 0;
   let gross = rate.mul(qty);
   if (item.setItemDiscountAmount) {
     const discAmt = isPesa(item.itemDiscountAmount)
-      ? (item.itemDiscountAmount as Money)
+      ? item.itemDiscountAmount
       : fyo.pesa((item.itemDiscountAmount as unknown as number) ?? 0);
     if (!discAmt.isZero()) {
       gross = gross.sub(discAmt.mul(qty));
@@ -1810,7 +1860,6 @@ export function getItemDisplayAmount(
   } else if (item.itemDiscountPercent && item.itemDiscountPercent > 0) {
     gross = gross.sub(gross.percent(item.itemDiscountPercent));
   }
-
 
   return gross;
 }
@@ -1906,9 +1955,21 @@ export async function getIncomingRateWithTax(
           | undefined;
       }
 
-      const taxRate = await getTaxRate(fyo, taxName);
-      if (taxRate > 0) {
-        effectiveRate = effectiveRate.mul(1 + taxRate / 100);
+      const isPurchaseTaxInclusive = pii.parent
+        ? Boolean(
+            await fyo.getValue(
+              'PurchaseInvoice',
+              pii.parent as string,
+              'taxInclusive'
+            )
+          )
+        : false;
+
+      if (!isPurchaseTaxInclusive) {
+        const taxRate = await getTaxRate(fyo, taxName);
+        if (taxRate > 0) {
+          effectiveRate = effectiveRate.mul(1 + taxRate / 100);
+        }
       }
 
       return effectiveRate.float;

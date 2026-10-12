@@ -75,15 +75,20 @@ import { toggleSidebar } from 'src/utils/ui';
     >
       <feather-icon name="chevrons-right" class="w-4 h-4" />
     </button>
+
+    <!-- Barcode Sticker Print Modal -->
+    <PrintBarcodeModal />
   </div>
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue';
 import Sidebar from '../components/Sidebar.vue';
+import PrintBarcodeModal from '../components/PrintBarcodeModal.vue';
 export default defineComponent({
   name: 'Desk',
   components: {
     Sidebar,
+    PrintBarcodeModal,
   },
   props: {
     darkMode: { type: Boolean, default: false },

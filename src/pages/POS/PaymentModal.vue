@@ -450,7 +450,7 @@
             >
               <span>{{ t`Taxes & Charges` }}</span>
               <span class="font-medium text-gray-800 dark:text-gray-200">{{
-                fyo.format(totalTaxedAmount, 'Currency')
+                fyo.format(taxAmount, 'Currency')
               }}</span>
             </div>
 
@@ -565,6 +565,72 @@
               <span>{{ t`Paid Change` }}</span>
               <span>{{ fyo.format(paidChange, 'Currency') }}</span>
             </div>
+
+            <!-- Manual Override: Sales Rate Includes Tax -->
+            <div
+              class="
+                flex
+                justify-between
+                items-center
+                pt-3
+                mt-1
+                border-t
+                dark:border-gray-700
+                text-sm text-gray-700
+                dark:text-gray-300
+              "
+            >
+              <span class="font-medium">{{ t`Sales Rate Includes Tax` }}</span>
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="isTaxInclusive"
+                class="
+                  relative
+                  inline-flex
+                  h-6
+                  w-11
+                  flex-shrink-0
+                  cursor-pointer
+                  rounded-full
+                  border-2 border-transparent
+                  transition-colors
+                  duration-200
+                  ease-in-out
+                  focus:outline-none
+                "
+                :class="
+                  isTaxInclusive
+                    ? 'bg-green-600'
+                    : 'bg-gray-300 dark:bg-gray-700'
+                "
+                :style="
+                  isTaxInclusive
+                    ? 'background-color: #30A66D !important;'
+                    : 'background-color: #C7C7C7 !important;'
+                "
+                @click="toggleTaxInclusive"
+              >
+                <span
+                  aria-hidden="true"
+                  class="
+                    pointer-events-none
+                    inline-block
+                    h-5
+                    w-5
+                    transform
+                    rounded-full
+                    bg-white
+                    shadow
+                    ring-0
+                    transition
+                    duration-200
+                    ease-in-out
+                  "
+                  :class="isTaxInclusive ? 'translate-x-5' : 'translate-x-0'"
+                />
+              </button>
+            </div>
           </div>
 
           <!-- Bottom Action Buttons -->
@@ -648,6 +714,7 @@ import { fyo } from 'src/initFyo';
 import { ModelNameEnum } from 'models/types';
 import { showToast } from 'src/utils/interactive';
 import { POSPaymentEntry } from 'src/components/POS/types';
+import { getTotalTaxedAmount } from 'src/utils/pos';
 
 interface PaymentMethodObj {
   name: string;
@@ -708,6 +775,15 @@ export default defineComponent({
     },
     grandTotal(): Money {
       return this.sinvDoc?.grandTotal ?? fyo.pesa(0);
+    },
+    taxAmount(): Money {
+      if (this.sinvDoc) {
+        return getTotalTaxedAmount(this.sinvDoc);
+      }
+      return this.totalTaxedAmount ?? fyo.pesa(0);
+    },
+    isTaxInclusive(): boolean {
+      return Boolean(this.sinvDoc?.taxInclusive);
     },
     totalPaid(): Money {
       let sum = fyo.pesa(0);
@@ -934,6 +1010,29 @@ export default defineComponent({
       }
       this.$emit('setPaidAmount', fyo.pesa(0));
       this.$emit('toggleModal', 'Payment');
+    },
+
+    async toggleTaxInclusive(): Promise<void> {
+      if (!this.sinvDoc) {
+        return;
+      }
+
+      const nextVal = !this.isTaxInclusive;
+      const prevGrandTotal = this.grandTotal;
+
+      await this.sinvDoc.set('taxInclusive', nextVal);
+      for (const item of this.sinvDoc.items ?? []) {
+        await item.runFormulas();
+      }
+      await this.sinvDoc.runFormulas();
+
+      if (
+        this.localEntries.length === 1 &&
+        this.localEntries[0].amount &&
+        this.localEntries[0].amount.eq(prevGrandTotal)
+      ) {
+        this.localEntries[0].amount = this.grandTotal;
+      }
     },
   },
 });

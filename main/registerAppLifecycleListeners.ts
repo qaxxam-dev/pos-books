@@ -27,9 +27,5 @@ export default function registerAppLifecycleListeners(main: Main) {
 }
 
 async function installDevTools(main: Main) {
-  try {
-    await installExtension(VUEJS3_DEVTOOLS);
-  } catch (e) {
-    rendererLog(main, 'Vue Devtools failed to install', e);
-  }
+  // Disabled to prevent Electron 22 sandboxed_renderer crash from incompatible Manifest V3 extension
 }
