@@ -73,7 +73,7 @@
             "
           >
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              {{ t`Label Dimensions (TVS LP 46 Dlite / Thermal Roll)` }}
+              {{ t`Label Dimensions` }}
             </h3>
             <div class="grid grid-cols-2 gap-3">
               <div>
