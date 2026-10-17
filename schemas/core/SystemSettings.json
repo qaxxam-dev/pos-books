@@ -148,6 +148,25 @@
       "fieldtype": "Check",
       "default": false,
       "section": "Customizations"
+    },
+    {
+      "fieldname": "security2faEnabled",
+      "label": "Enable 2FA Protection",
+      "fieldtype": "Check",
+      "default": false,
+      "section": "Security"
+    },
+    {
+      "fieldname": "securityTotpSecret",
+      "label": "TOTP Secret",
+      "fieldtype": "Data",
+      "hidden": true
+    },
+    {
+      "fieldname": "securityRecoveryCode",
+      "label": "Recovery Code",
+      "fieldtype": "Data",
+      "hidden": true
     }
   ],
   "quickEditFields": [

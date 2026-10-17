@@ -1,10 +1,13 @@
-import { Fyo } from 'fyo';
+import { Fyo, t } from 'fyo';
 import { Doc } from 'fyo/model/doc';
 import {
   Action,
+  DefaultMap,
+  EmptyMessageMap,
   FiltersMap,
   FormulaMap,
   ListViewSettings,
+  ListsMap,
   ValidationMap,
 } from 'fyo/model/types';
 import {
@@ -15,6 +18,8 @@ import { Money } from 'pesa';
 import { PartyRole } from './types';
 import { ModelNameEnum } from 'models/types';
 import { isLoyaltyProgramExpiredAndMaxed } from 'models/helpers';
+import { codeStateMap } from 'regional/in';
+import { getCountryInfo } from 'utils/misc';
 
 export class Party extends Doc {
   role?: PartyRole;
@@ -23,6 +28,13 @@ export class Party extends Doc {
   defaultAccount?: string;
   loyaltyPoints?: number;
   outstandingAmount?: Money;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  country?: string;
+  state?: string;
+  postalCode?: string;
+  address?: string | null;
   async updateOutstandingAmount() {
     /**
      * If Role === "Both" then outstanding Amount
@@ -145,6 +157,59 @@ export class Party extends Doc {
         }
       },
     },
+    addressLine1: {
+      formula: async () => {
+        if (!this.notInserted && this.address && !this.addressLine1) {
+          try {
+            const addr = await this.fyo.doc.getDoc('Address', this.address);
+            if (addr) {
+              if (addr.addressLine1)
+                this.addressLine1 = addr.addressLine1 as string;
+              if (addr.addressLine2)
+                this.addressLine2 = addr.addressLine2 as string;
+              if (addr.city) this.city = addr.city as string;
+              if (addr.state) this.state = addr.state as string;
+              if (addr.country) this.country = addr.country as string;
+              if (addr.postalCode) this.postalCode = addr.postalCode as string;
+              return this.addressLine1;
+            }
+          } catch {}
+        }
+      },
+      dependsOn: ['address'],
+    },
+  };
+
+  static defaults: DefaultMap = {
+    city: (doc) => doc.fyo.singles.Defaults?.defaultCity ?? '',
+    country: (doc) => doc.fyo.singles.Defaults?.defaultCountry ?? '',
+    state: (doc) => doc.fyo.singles.Defaults?.defaultState ?? '',
+    postalCode: (doc) => doc.fyo.singles.Defaults?.defaultPostalCode ?? '',
+  };
+
+  static lists: ListsMap = {
+    state(doc?: Doc) {
+      const country = doc?.country as string | undefined;
+      switch (country) {
+        case 'India':
+          return Object.values(codeStateMap).sort();
+        default:
+          return [] as string[];
+      }
+    },
+    country() {
+      return Object.keys(getCountryInfo()).sort();
+    },
+  };
+
+  static emptyMessages: EmptyMessageMap = {
+    state: (doc: Doc) => {
+      if (doc.country) {
+        return t`Enter State`;
+      }
+
+      return t`Enter Country to load States`;
+    },
   };
 
   validations: ValidationMap = {
@@ -173,6 +238,68 @@ export class Party extends Doc {
     return {
       columns: ['name', 'email', 'phone', 'outstandingAmount'],
     };
+  }
+
+  async beforeSync() {
+    await super.beforeSync();
+    await this.syncAddress();
+  }
+
+  async syncAddress() {
+    const hasAddressLine1 = Boolean(
+      this.addressLine1 && this.addressLine1.trim()
+    );
+
+    if (!hasAddressLine1) {
+      this.address = null;
+      return;
+    }
+
+    const addressData = {
+      addressLine1: this.addressLine1.trim(),
+      addressLine2: this.addressLine2 ? this.addressLine2.trim() : '',
+      city:
+        (this.city && this.city.trim()) ||
+        (this.fyo.singles.Defaults?.defaultCity ?? ''),
+      country:
+        (this.country && this.country.trim()) ||
+        (this.fyo.singles.Defaults?.defaultCountry ?? ''),
+      state:
+        (this.state && this.state.trim()) ||
+        (this.fyo.singles.Defaults?.defaultState ?? ''),
+      postalCode:
+        (this.postalCode && this.postalCode.trim()) ||
+        (this.fyo.singles.Defaults?.defaultPostalCode ?? ''),
+      emailAddress: (this.email as string) || '',
+      phone: (this.phone as string) || '',
+    };
+
+    let addressDoc: Doc | null = null;
+    if (this.address) {
+      try {
+        addressDoc = await this.fyo.doc.getDoc('Address', this.address);
+      } catch {
+        addressDoc = null;
+      }
+    }
+
+    if (addressDoc) {
+      await addressDoc.setAndSync(addressData);
+    } else {
+      const addressName = `${this.name ?? ''} - Address`;
+      const exists = await this.fyo.db.exists('Address', addressName);
+      if (exists) {
+        addressDoc = await this.fyo.doc.getDoc('Address', addressName);
+        await addressDoc.setAndSync(addressData);
+      } else {
+        addressDoc = this.fyo.doc.getNewDoc('Address', {
+          name: addressName,
+          ...addressData,
+        });
+        await addressDoc.sync();
+      }
+      this.address = addressDoc.name;
+    }
   }
 
   async afterDelete() {

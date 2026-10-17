@@ -34,11 +34,28 @@
     <div class="col-span-2 font-bold">Customer</div>
     <div class="col-start-3">:</div>
     <div class="col-span-4 col-start-4">{{ doc.party }}</div>
-    <template v-if="doc.partyPhone || doc.links?.party?.phone">
+    <template
+      v-if="
+        (doc.partyPhone || doc.links?.party?.phone) &&
+        (doc.partyPhone || doc.links?.party?.phone) !== doc.party
+      "
+    >
       <div class="col-span-2 font-bold">Phone</div>
       <div class="col-start-3">:</div>
       <div class="col-span-4 col-start-4">
         {{ doc.partyPhone || doc.links?.party?.phone }}
+      </div>
+    </template>
+    <template
+      v-if="
+        doc.links?.party?.address &&
+        doc.links?.party?.links?.address?.addressDisplay
+      "
+    >
+      <div class="col-span-2 font-bold">Address</div>
+      <div class="col-start-3">:</div>
+      <div class="col-span-4 col-start-4">
+        {{ doc.links.party.links.address.addressDisplay }}
       </div>
     </template>
     <div class="col-span-2 font-bold">Date</div>

@@ -1,8 +1,10 @@
 import { DefaultCashDenominations } from 'models/inventory/Point of Sale/DefaultCashDenominations';
 import { Doc } from 'fyo/model/doc';
-import { FiltersMap, HiddenMap } from 'fyo/model/types';
+import { FiltersMap, HiddenMap, ListsMap } from 'fyo/model/types';
 import { ModelNameEnum } from 'models/types';
 import { PartyRoleEnum } from '../Party/types';
+import { codeStateMap } from 'regional/in';
+import { getCountryInfo } from 'utils/misc';
 
 export class Defaults extends Doc {
   // Auto Payments
@@ -43,6 +45,18 @@ export class Defaults extends Doc {
   // Point of Sale
   posCashDenominations?: DefaultCashDenominations[];
   posCustomer?: string;
+
+  // Default Address
+  defaultCity?: string;
+  defaultCountry?: string;
+  defaultState?: string;
+  defaultPostalCode?: string;
+
+  // WhatsApp Settings
+  whatsappShareFormat?: 'Text Receipt' | 'PDF File';
+  whatsappPrintTemplate?: string;
+  whatsappPdfFolder?: string;
+  whatsappCountryCode?: string;
 
   //Buttons
   saveButtonColour?: string;
@@ -86,6 +100,7 @@ export class Defaults extends Doc {
     salesQuotePrintTemplate: () => ({ type: ModelNameEnum.SalesQuote }),
     salesInvoicePrintTemplate: () => ({ type: ModelNameEnum.SalesInvoice }),
     posPrintTemplate: () => ({ type: ModelNameEnum.SalesInvoice }),
+    whatsappPrintTemplate: () => ({ type: ModelNameEnum.SalesInvoice }),
     purchaseInvoicePrintTemplate: () => ({
       type: ModelNameEnum.PurchaseInvoice,
     }),
@@ -101,6 +116,22 @@ export class Defaults extends Doc {
 
   static filters: FiltersMap = this.commonFilters;
   static createFilters: FiltersMap = this.commonFilters;
+
+  static lists: ListsMap = {
+    defaultState(doc?: Doc) {
+      const country = (doc?.defaultCountry ||
+        (doc as Defaults)?.defaultCountry) as string | undefined;
+      switch (country) {
+        case 'India':
+          return Object.values(codeStateMap).sort();
+        default:
+          return [] as string[];
+      }
+    },
+    defaultCountry() {
+      return Object.keys(getCountryInfo()).sort();
+    },
+  };
 
   getInventoryHidden() {
     return () => !this.fyo.singles.AccountingSettings?.enableInventory;

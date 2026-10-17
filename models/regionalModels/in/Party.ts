@@ -1,4 +1,4 @@
-import { HiddenMap } from 'fyo/model/types';
+import { DefaultMap, HiddenMap } from 'fyo/model/types';
 import { Party as BaseParty } from 'models/baseModels/Party/Party';
 import { GSTType } from './types';
 import { PartyRole } from 'models/baseModels/Party/types';
@@ -9,8 +9,12 @@ export class Party extends BaseParty {
   gstType?: GSTType;
   loyaltyProgram?: string;
 
-  // eslint-disable-next-line @typescript-eslint/require-await
+  static defaults: DefaultMap = {
+    ...BaseParty.defaults,
+  };
+
   async beforeSync() {
+    await super.beforeSync();
     const gstin = this.get('gstin') as string | undefined;
     const gstType = this.get('gstType') as GSTType;
 

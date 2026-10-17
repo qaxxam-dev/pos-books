@@ -16,6 +16,15 @@
         @change="onTemplateNameChange"
       />
       <DropdownWithActions :actions="actions" :title="t`More`" />
+      <Button
+        v-if="canShareWhatsApp"
+        class="text-xs flex items-center gap-1.5"
+        style="background-color: #059669 !important; color: #ffffff !important"
+        @click="shareWhatsApp"
+      >
+        <feather-icon name="message-circle" class="w-3.5 h-3.5 text-white" />
+        <span>{{ t`WhatsApp` }}</span>
+      </Button>
       <Button class="text-xs" type="primary" @click="savePDF()">
         {{ t`Save as PDF` }}
       </Button>
@@ -178,6 +187,14 @@ export default defineComponent({
 
       return actions;
     },
+    canShareWhatsApp(): boolean {
+      if (!this.doc || !this.doc.name) return false;
+      return [
+        ModelNameEnum.SalesInvoice,
+        ModelNameEnum.PurchaseInvoice,
+        ModelNameEnum.SalesQuote,
+      ].includes(this.doc.schemaName as ModelNameEnum);
+    },
   },
   async mounted() {
     await this.initialize();
@@ -296,6 +313,11 @@ export default defineComponent({
       }
 
       await this.onTemplateNameChange(templateName);
+    },
+    async shareWhatsApp() {
+      if (!this.doc) return;
+      const { shareInvoiceOnWhatsApp } = await import('src/utils/whatsapp');
+      await shareInvoiceOnWhatsApp(this.doc, this.fyo);
     },
   },
 });
