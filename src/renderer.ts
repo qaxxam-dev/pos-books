@@ -56,7 +56,11 @@ import { setLanguageMap } from './utils/language';
     },
   });
 
-  await fyo.telemetry.logOpened();
+  try {
+    await fyo.telemetry.logOpened();
+  } catch (e) {
+    // Prevent telemetry failure from blocking app mounting
+  }
   app.mount('body');
 })();
 

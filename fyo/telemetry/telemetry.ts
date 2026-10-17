@@ -100,7 +100,13 @@ export class TelemetryManager {
       telemetryData,
     });
 
-    navigator.sendBeacon(this.#url, data);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(this.#url, data);
+      }
+    } catch (_) {
+      // Beacons are only supported over HTTP(S) in Chromium/Electron. Silently ignore on custom protocols like app://
+    }
   }
 
   async #setCreds() {

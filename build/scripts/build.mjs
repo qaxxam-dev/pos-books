@@ -10,6 +10,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import frappeBooksConfig from '../../electron-builder-config.mjs';
 import { createRequire } from 'module';
+import { execSync } from 'child_process';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(dirname, '..', '..');
@@ -43,9 +44,26 @@ if (!argv.nopackage) {
 }
 
 function updatePaths() {
+  if (process.platform === 'win32') {
+    try {
+      execSync('taskkill /F /IM "POS Books.exe" /T', { stdio: 'ignore' });
+    } catch (_) {
+      // Process not running
+    }
+  }
   fs.removeSync(buildDirPath);
   fs.ensureDirSync(buildDirPath);
-  fs.removeSync(packageDirPath);
+  try {
+    fs.removeSync(packageDirPath);
+  } catch (err) {
+    if (err.code === 'EPERM' || err.code === 'EBUSY') {
+      console.warn(
+        `Warning: Could not remove ${packageDirPath} due to active lock (${err.code}). Continuing build...`
+      );
+    } else {
+      throw err;
+    }
+  }
   fs.ensureDirSync(packageDirPath);
   fs.ensureDirSync(path.join(buildDirPath, 'node_modules'));
 }
@@ -62,10 +80,28 @@ async function buildMainProcessSource() {
     process.exit(1);
   }
 
-  // ByteNode compilation — compile main.js into V8 bytecode
-  const { execSync } = await import('child_process');
+  // Ensure electron binary is available for bytecode compilation
+  const electronPathTxt = path.join(root, 'node_modules', 'electron', 'path.txt');
+  if (!fs.existsSync(electronPathTxt)) {
+    console.log('Installing Electron binaries for bytenode compilation...');
+    execSync('node node_modules/electron/install.js', { cwd: root, stdio: 'inherit' });
+  }
+
+  // ByteNode compilation — compile main.js into V8 bytecode for Electron runtime
   const mainJsPath = path.join(buildDirPath, mainFileName);
-  execSync(`npx bytenode -c "${mainJsPath}"`, { stdio: 'inherit' });
+  const mainJscPath = path.join(buildDirPath, 'main.jsc');
+
+  const require = createRequire(import.meta.url);
+  const bytenode = require('bytenode');
+  await bytenode.compileFile({
+    filename: mainJsPath,
+    output: mainJscPath,
+    electron: true,
+  });
+
+  if (!fs.existsSync(mainJscPath) || fs.statSync(mainJscPath).size === 0) {
+    throw new Error('Failed to generate main.jsc via bytenode!');
+  }
 
   // Replace main.js with a tiny loader that runs the compiled bytecode
   fs.writeFileSync(
