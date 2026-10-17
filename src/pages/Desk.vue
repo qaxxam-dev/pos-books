@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { showSidebar } from 'src/utils/refs';
 import { toggleSidebar } from 'src/utils/ui';
+import SecurityLockOverlay from 'src/components/SecurityLockOverlay.vue';
 </script>
 <template>
   <div class="relative flex overflow-hidden">
@@ -22,6 +23,7 @@ import { toggleSidebar } from 'src/utils/ui';
 
     <div
       class="
+        relative
         flex flex-1
         overflow-y-hidden
         custom-scroll custom-scroll-thumb1
@@ -29,6 +31,7 @@ import { toggleSidebar } from 'src/utils/ui';
         dark:bg-gray-875
       "
     >
+      <SecurityLockOverlay />
       <router-view v-slot="{ Component }">
         <keep-alive>
           <component

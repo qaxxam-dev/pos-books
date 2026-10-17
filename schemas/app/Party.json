@@ -54,12 +54,57 @@
       "section": "Contacts"
     },
     {
+      "fieldname": "addressLine1",
+      "label": "Address Line 1",
+      "placeholder": "Address Line 1",
+      "fieldtype": "Data",
+      "section": "Address"
+    },
+    {
+      "fieldname": "addressLine2",
+      "label": "Address Line 2",
+      "placeholder": "Address Line 2",
+      "fieldtype": "Data",
+      "section": "Address"
+    },
+    {
+      "fieldname": "city",
+      "label": "City / Town",
+      "placeholder": "City / Town",
+      "fieldtype": "Data",
+      "section": "Address"
+    },
+    {
+      "fieldname": "country",
+      "label": "Country",
+      "placeholder": "Country",
+      "fieldtype": "AutoComplete",
+      "options": [],
+      "section": "Address"
+    },
+    {
+      "fieldname": "state",
+      "label": "State",
+      "placeholder": "State",
+      "fieldtype": "AutoComplete",
+      "options": [],
+      "section": "Address"
+    },
+    {
+      "fieldname": "postalCode",
+      "label": "Postal Code",
+      "placeholder": "Postal Code",
+      "fieldtype": "Data",
+      "section": "Address"
+    },
+    {
       "fieldname": "address",
       "label": "Address",
       "fieldtype": "Link",
       "target": "Address",
+      "hidden": true,
       "create": true,
-      "section": "Contacts"
+      "section": "Address"
     },
     {
       "fieldname": "defaultAccount",
@@ -119,7 +164,11 @@
   "quickEditFields": [
     "email",
     "phone",
-    "address",
+    "addressLine1",
+    "city",
+    "country",
+    "state",
+    "postalCode",
     "defaultAccount",
     "loyaltyProgram",
     "currency",

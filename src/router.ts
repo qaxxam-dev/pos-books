@@ -154,7 +154,7 @@ const router = createRouter({ routes, history: createWebHistory() });
 router.beforeEach(async (to, from, next) => {
   const storedKey = localStorage.getItem('app_license_key');
   let isLicensed = false;
-  
+
   if (storedKey) {
     isLicensed = await window.ipc.verifyLicense(storedKey);
   }
@@ -177,5 +177,9 @@ router.afterEach(({ fullPath }) => {
 
   localStorage.setItem('lastRoute', fullPath);
 });
+
+import { setupSecurityRouterWatcher } from './utils/securityLock';
+
+setupSecurityRouterWatcher(router);
 
 export default router;

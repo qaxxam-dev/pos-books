@@ -557,6 +557,76 @@
         }
       ],
       "section": "Point of Sale"
+    },
+    {
+      "fieldname": "defaultCity",
+      "label": "City / Town",
+      "placeholder": "City / Town",
+      "fieldtype": "Data",
+      "section": "Default Address"
+    },
+    {
+      "fieldname": "defaultCountry",
+      "label": "Country",
+      "placeholder": "Country",
+      "fieldtype": "AutoComplete",
+      "options": [],
+      "section": "Default Address"
+    },
+    {
+      "fieldname": "defaultState",
+      "label": "State",
+      "placeholder": "State",
+      "fieldtype": "AutoComplete",
+      "options": [],
+      "section": "Default Address"
+    },
+    {
+      "fieldname": "defaultPostalCode",
+      "label": "Postal Code",
+      "placeholder": "Postal Code",
+      "fieldtype": "Data",
+      "section": "Default Address"
+    },
+    {
+      "fieldname": "whatsappShareFormat",
+      "label": "Share Format",
+      "fieldtype": "Select",
+      "default": "Text Receipt",
+      "options": [
+        {
+          "value": "Text Receipt",
+          "label": "Text Receipt"
+        },
+        {
+          "value": "PDF File",
+          "label": "PDF File"
+        }
+      ],
+      "section": "WhatsApp Settings"
+    },
+    {
+      "fieldname": "whatsappPrintTemplate",
+      "label": "Print Template (PDF)",
+      "placeholder": "Default template for WhatsApp PDF",
+      "fieldtype": "Link",
+      "target": "PrintTemplate",
+      "section": "WhatsApp Settings"
+    },
+    {
+      "fieldname": "whatsappPdfFolder",
+      "label": "PDF Save Folder",
+      "placeholder": "Folder path to auto-save bills",
+      "fieldtype": "Data",
+      "section": "WhatsApp Settings"
+    },
+    {
+      "fieldname": "whatsappCountryCode",
+      "label": "Default Country Code",
+      "placeholder": "91",
+      "default": "91",
+      "fieldtype": "Data",
+      "section": "WhatsApp Settings"
     }
   ]
 }

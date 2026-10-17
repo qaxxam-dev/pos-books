@@ -33,7 +33,11 @@
   "quickEditFields": [
     "email",
     "phone",
-    "address",
+    "addressLine1",
+    "city",
+    "country",
+    "state",
+    "postalCode",
     "defaultAccount",
     "currency",
     "role",

@@ -194,7 +194,53 @@ export async function getPrintTemplatePropValues(
       partyPhone = '';
     }
   }
+
+  // If customer name and phone are the same, hide phone on print
+  const partyName =
+    (doc.links?.party?.name as string) || (doc.party as string) || '';
+  const cleanPartyName = partyName.trim().replace(/\D/g, '');
+  const cleanPartyPhone = partyPhone.trim().replace(/\D/g, '');
+  const isSameNumber =
+    cleanPartyPhone.length >= 7 &&
+    cleanPartyName.length >= 7 &&
+    (cleanPartyName === cleanPartyPhone ||
+      cleanPartyName.endsWith(cleanPartyPhone) ||
+      cleanPartyPhone.endsWith(cleanPartyName));
+
+  if (partyName.trim() === partyPhone.trim() || isSameNumber) {
+    partyPhone = '';
+    if (values.doc.links && (values.doc.links as PrintTemplateData).party) {
+      delete (
+        (values.doc.links as PrintTemplateData).party as PrintTemplateData
+      ).phone;
+      delete (
+        (values.doc.links as PrintTemplateData).party as PrintTemplateData
+      ).mobile;
+    }
+  }
+
   (values.doc as PrintTemplateData).partyPhone = partyPhone;
+
+  // If party has no addressLine1, skip address from print
+  if (values.doc.links && (values.doc.links as PrintTemplateData).party) {
+    const partyData = (values.doc.links as PrintTemplateData)
+      .party as PrintTemplateData;
+    const addressData = partyData.links?.address as
+      | PrintTemplateData
+      | undefined;
+    const hasAddress = Boolean(
+      (partyData.addressLine1 && String(partyData.addressLine1).trim()) ||
+        (addressData &&
+          addressData.addressLine1 &&
+          String(addressData.addressLine1).trim())
+    );
+    if (!hasAddress) {
+      delete partyData.address;
+      if (partyData.links) {
+        delete (partyData.links as PrintTemplateData).address;
+      }
+    }
+  }
 
   return values;
 }
@@ -550,7 +596,7 @@ export async function getPathAndMakePDF(
   }
 }
 
-function constructPrintDocument(innerHTML: string) {
+export function constructPrintDocument(innerHTML: string) {
   const html = document.createElement('html');
   const head = document.createElement('head');
   const body = document.createElement('body');

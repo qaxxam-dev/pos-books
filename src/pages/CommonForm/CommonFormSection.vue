@@ -93,6 +93,28 @@
           </button>
         </div>
         <div
+          v-if="field.fieldname === 'whatsappPdfFolder'"
+          class="mt-1 flex items-center justify-between gap-2"
+        >
+          <button
+            type="button"
+            class="
+              text-xs text-emerald-600
+              dark:text-emerald-400
+              hover:underline
+              flex
+              items-center
+              gap-1
+              font-medium
+              cursor-pointer
+            "
+            @click="chooseWhatsAppPdfFolder"
+          >
+            <feather-icon name="folder" class="w-3 h-3" />
+            {{ t`Browse Folder...` }}
+          </button>
+        </div>
+        <div
           v-if="
             field.fieldname === 'barcode' &&
             doc?.schemaName === 'Item' &&
@@ -203,6 +225,24 @@ export default defineComponent({
         fontSize: 10,
         includeText: true,
       });
+    },
+    async chooseWhatsAppPdfFolder() {
+      try {
+        const res = await ipc.getOpenFilePath({
+          properties: ['openDirectory'],
+        });
+        if (res && !res.canceled && res.filePaths?.[0]) {
+          const folderField = this.fields.find(
+            (f) => f.fieldname === 'whatsappPdfFolder'
+          );
+          await this.doc.set('whatsappPdfFolder', res.filePaths[0]);
+          if (folderField) {
+            this.$emit('value-change', folderField, res.filePaths[0]);
+          }
+        }
+      } catch {
+        // non-blocking
+      }
     },
   },
 });

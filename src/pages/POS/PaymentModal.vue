@@ -637,21 +637,52 @@
           <div class="grid grid-cols-2 gap-3 mt-6">
             <Button
               class="
-                col-span-2
-                py-4
-                bg-emerald-600
-                hover:bg-emerald-700
+                col-span-1
+                py-3.5
+                bg-orange-500
+                hover:bg-orange-600
                 font-bold
-                text-lg
+                text-base
                 rounded-md
                 uppercase
                 transition-colors
+                flex
+                items-center
+                justify-center
+                gap-2
+              "
+              style="
+                background-color: #f97316 !important;
+                color: #ffffff !important;
               "
               @click="payAndPrintTransaction"
             >
-              <slot>
-                <span>{{ t`Pay & Print` }}</span>
-              </slot>
+              <feather-icon name="printer" class="w-5 h-5 text-white" />
+              <span>{{ t`Pay & Print` }}</span>
+            </Button>
+
+            <Button
+              class="
+                col-span-1
+                py-3.5
+                font-bold
+                text-base
+                rounded-md
+                uppercase
+                transition-colors
+                flex
+                items-center
+                justify-center
+                gap-2
+              "
+              style="
+                background-color: #059669 !important;
+                color: #ffffff !important;
+              "
+              @click="payAndShareTransaction"
+            >
+              <feather-icon name="message-circle" class="w-5 h-5 text-white" />
+              <span>{{ t`Pay & Share` }}</span>
             </Button>
 
             <Button
@@ -666,7 +697,10 @@
                 uppercase
                 transition-colors
               "
-              style="color: #ffffff !important"
+              style="
+                background-color: #16a34a !important;
+                color: #ffffff !important;
+              "
               @click="payTransaction"
             >
               <slot>
@@ -686,7 +720,10 @@
                 uppercase
                 transition-colors
               "
-              style="color: #ffffff !important"
+              style="
+                background-color: #ef4444 !important;
+                color: #ffffff !important;
+              "
               @click="cancelTransaction"
             >
               <slot>
@@ -995,7 +1032,19 @@ export default defineComponent({
       }
 
       this.syncStateToParent();
-      this.$emit('createTransaction', true, true);
+      this.$emit('createTransaction', true, true, false);
+    },
+
+    payAndShareTransaction() {
+      if (this.localEntries.length === 0) {
+        return showToast({
+          type: 'error',
+          message: fyo.t`Please select at least one payment method.`,
+        });
+      }
+
+      this.syncStateToParent();
+      this.$emit('createTransaction', false, true, true);
     },
 
     cancelTransaction() {

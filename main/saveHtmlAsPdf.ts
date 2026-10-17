@@ -29,6 +29,7 @@ export async function saveHtmlAsPdf(
   };
 
   const data = await printWindow.webContents.printToPDF(printOptions);
+  await fs.mkdir(path.dirname(savePath), { recursive: true });
   await fs.writeFile(savePath, data);
   printWindow.close();
   await fs.unlink(htmlPath);

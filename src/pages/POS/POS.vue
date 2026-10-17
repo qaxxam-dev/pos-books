@@ -1194,7 +1194,11 @@ export default defineComponent({
       }
     },
 
-    async createTransaction(shouldPrint = false, isPay = false) {
+    async createTransaction(
+      shouldPrint = false,
+      isPay = false,
+      shouldShare = false
+    ) {
       try {
         this.sinvDoc.date = new Date();
         await this.validate();
@@ -1210,14 +1214,19 @@ export default defineComponent({
         }
 
         if (isPay) {
-          await this.makePayment(shouldPrint);
+          await this.makePayment(shouldPrint, shouldShare);
         }
 
-        if (shouldPrint) {
+        if (shouldPrint && !isPay) {
           await routeTo(
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             `/print/${this.sinvDoc.schemaName}/${this.sinvDoc.name}`
           );
+        }
+
+        if (shouldShare && !isPay) {
+          const { shareInvoiceOnWhatsApp } = await import('src/utils/whatsapp');
+          await shareInvoiceOnWhatsApp(this.sinvDoc, this.fyo);
         }
 
         await this.afterTransaction();
@@ -1235,7 +1244,7 @@ export default defineComponent({
     setWriteOffAmount(amount: Money) {
       this.writeOffAmount = amount || fyo.pesa(0);
     },
-    async makePayment(shouldPrint: boolean) {
+    async makePayment(shouldPrint: boolean, shouldShare = false) {
       const activeEntries = (this.paymentEntries || []).filter(
         (entry) => entry.amount && !entry.amount.isZero() && entry.amount.isPositive()
       );
@@ -1316,8 +1325,14 @@ export default defineComponent({
 
         if (shouldPrint) {
           await routeTo(
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             `/print/${this.sinvDoc.schemaName}/${this.sinvDoc.name}`
           );
+        }
+
+        if (shouldShare) {
+          const { shareInvoiceOnWhatsApp } = await import('src/utils/whatsapp');
+          await shareInvoiceOnWhatsApp(this.sinvDoc, this.fyo);
         }
       } catch (error) {
         return showToast({

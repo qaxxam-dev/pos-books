@@ -18,6 +18,9 @@ export default class SystemSettings extends Doc {
   instanceId?: string;
   darkMode?: boolean;
   displayTermsAndConditions?: boolean;
+  security2faEnabled?: boolean;
+  securityTotpSecret?: string;
+  securityRecoveryCode?: string;
 
   validations: ValidationMap = {
     displayPrecision(value: DocValue) {

@@ -50,7 +50,12 @@
           <p v-if="doc.links?.party?.address">
             {{ doc.links.party.links.address.addressDisplay }}
           </p>
-          <p v-if="doc.partyPhone || doc.links?.party?.phone">
+          <p
+            v-if="
+              (doc.partyPhone || doc.links?.party?.phone) &&
+              (doc.partyPhone || doc.links?.party?.phone) !== doc.party
+            "
+          >
             {{ t`Phone` }}: {{ doc.partyPhone || doc.links?.party?.phone }}
           </p>
           <p v-if="doc.links?.party?.gstin">

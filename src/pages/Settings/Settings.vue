@@ -20,8 +20,17 @@
       >
       </FormHeader>
 
+      <!-- Security Tab -->
+      <SecuritySettingsTab
+        v-if="activeTab === 'Security'"
+        class="flex-1 overflow-auto"
+      />
+
       <!-- Section Container -->
-      <div v-if="doc" class="overflow-auto custom-scroll custom-scroll-thumb1">
+      <div
+        v-else-if="doc"
+        class="overflow-auto custom-scroll custom-scroll-thumb1"
+      >
         <CommonFormSection
           v-for="([name, fields], idx) in activeGroup.entries()"
           :key="name + idx"
@@ -98,11 +107,18 @@ import { docsPathRef } from 'src/utils/refs';
 import { UIGroupedFields } from 'src/utils/types';
 import { computed, defineComponent, inject } from 'vue';
 import CommonFormSection from '../CommonForm/CommonFormSection.vue';
+import SecuritySettingsTab from 'src/components/SecuritySettingsTab.vue';
 
 const COMPONENT_NAME = 'Settings';
 
 export default defineComponent({
-  components: { FormContainer, Button, FormHeader, CommonFormSection },
+  components: {
+    FormContainer,
+    Button,
+    FormHeader,
+    CommonFormSection,
+    SecuritySettingsTab,
+  },
   provide() {
     return { doc: computed(() => this.doc) };
   },
@@ -124,6 +140,10 @@ export default defineComponent({
   },
   computed: {
     canSave() {
+      if (this.activeTab === 'Security') {
+        return false;
+      }
+
       return [
         ModelNameEnum.AccountingSettings,
         ModelNameEnum.InventorySettings,
@@ -135,6 +155,10 @@ export default defineComponent({
       ].some((s) => this.fyo.singles[s]?.canSave);
     },
     doc(): Doc | null {
+      if (this.activeTab === 'Security') {
+        return null;
+      }
+
       const doc = this.fyo.singles[this.activeTab];
       if (!doc) {
         return null;
@@ -151,6 +175,7 @@ export default defineComponent({
         [ModelNameEnum.POSSettings]: this.t`POS Settings`,
         [ModelNameEnum.ERPNextSyncSettings]: this.t`ERPNext Sync`,
         [ModelNameEnum.SystemSettings]: this.t`System`,
+        Security: this.t`Security`,
       };
     },
     schemas(): Schema[] {
@@ -187,6 +212,10 @@ export default defineComponent({
         .map((s) => this.fyo.schemaMap[s]!);
     },
     activeGroup(): Map<string, Field[]> {
+      if (this.activeTab === 'Security') {
+        return new Map();
+      }
+
       if (!this.groupedFields) {
         return new Map();
       }
@@ -327,6 +356,7 @@ export default defineComponent({
         tabbed.get(section)!.push(field);
       }
 
+      grouped.set('Security', new Map());
       this.groupedFields = grouped;
     },
   },

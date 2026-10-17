@@ -70,7 +70,8 @@
         (date) => emitEvent('setTransferClearanceDate', date)
       "
       @create-transaction="
-        (print, status) => emitEvent('createTransaction', print, status)
+        (print, status, share) =>
+          emitEvent('createTransaction', print, status, share)
       "
     />
 

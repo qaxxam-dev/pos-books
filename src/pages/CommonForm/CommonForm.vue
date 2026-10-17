@@ -46,6 +46,17 @@
         <feather-icon name="printer" class="w-4 h-4"></feather-icon>
       </Button>
       <Button
+        v-if="canShareWhatsApp"
+        :icon="true"
+        :title="t`Share on WhatsApp`"
+        @click="shareOnWhatsApp"
+      >
+        <feather-icon
+          name="message-circle"
+          class="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+        ></feather-icon>
+      </Button>
+      <Button
         :icon="true"
         :title="t`Toggle between form and full width`"
         @click="toggleWidth"
@@ -372,12 +383,41 @@ export default defineComponent({
 
       return group;
     },
+    canShareWhatsApp(): boolean {
+      if (!this.hasDoc || !this.doc.name) {
+        return false;
+      }
+      return [
+        ModelNameEnum.SalesInvoice,
+        ModelNameEnum.PurchaseInvoice,
+        ModelNameEnum.SalesQuote,
+      ].includes(this.doc.schemaName as ModelNameEnum);
+    },
     groupedActions(): ActionGroup[] {
       if (!this.hasDoc) {
         return [];
       }
 
-      return getGroupedActionsForDoc(this.doc);
+      const actions = getGroupedActionsForDoc(this.doc);
+      if (this.canShareWhatsApp) {
+        let exportGroup = actions.find(
+          (g) => g.group === this.t`Export` || g.group === 'Export'
+        );
+        if (!exportGroup) {
+          exportGroup = {
+            group: this.t`Export`,
+            label: this.t`Export`,
+            type: 'secondary',
+            actions: [],
+          };
+          actions.push(exportGroup);
+        }
+        exportGroup.actions.push({
+          label: this.t`Share on WhatsApp`,
+          action: () => this.shareOnWhatsApp(),
+        });
+      }
+      return actions;
     },
   },
   beforeMount() {
@@ -422,6 +462,10 @@ export default defineComponent({
   },
   methods: {
     routeTo,
+    async shareOnWhatsApp() {
+      const { shareInvoiceOnWhatsApp } = await import('src/utils/whatsapp');
+      await shareInvoiceOnWhatsApp(this.doc, this.fyo);
+    },
     async toggleWidth() {
       const value = !this.useFullWidth;
       await this.fyo.singles.Misc?.setAndSync('useFullWidth', value);
